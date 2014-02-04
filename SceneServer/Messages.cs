@@ -10,4 +10,18 @@ namespace Messages
     {
         public string msg = "Hello from Max";
     }
+
+    public enum MessageTypes
+    {
+        Ping,
+        GeometryRequest,
+    }
+
+    [Serializable]
+    public class UnityMessage
+    {
+        public MessageTypes MessageType;
+
+
+    }
 }

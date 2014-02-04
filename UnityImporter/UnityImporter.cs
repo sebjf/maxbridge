@@ -13,19 +13,18 @@ using Messages;
 
 namespace MaxUnityBridge
 {
-    public class UnityImporter
+    public class NamedPipeClientStreamSimple
     {
-        public UnityImporter()
-        {
-            pipe = new NamedPipeClientStream("MaxUnityBridge");
-        }
-
-        void pipe_MessageReceived(object sender, MessageEventArgs args)
-        {
-            Debug.Log("Message recieved");
-        }
-
+        protected string name;
         protected NamedPipeClientStream pipe;
+        protected int maxMessageSize = 10000000; //Remember this is just for messaging - the geometry will be passed via shared memory
+        protected byte[] buffer;
+
+        public NamedPipeClientStreamSimple(string name)
+        {
+            pipe = new NamedPipeClientStream(name);
+            buffer = new byte[maxMessageSize];
+        }
 
         public void MakeConnection()
         {
@@ -39,29 +38,51 @@ namespace MaxUnityBridge
                 catch
                 {
                     Debug.Log("Could not find Max!");
-                    return;
                 }
             }
         }
+
+        BinaryFormatter formatter = new BinaryFormatter();
+
+        public void SendMessage(object message)
+        {
+            MakeConnection();
+            formatter.Serialize(pipe, message);
+            pipe.Flush();
+        }
+
+        public object ReceiveMessage()
+        {
+            pipe.Read(buffer, 0, maxMessageSize);
+            return MessageSerializers.DeserializeObject(buffer);
+        }
+
+        public T RecieveMessage<T>()
+        {
+            return (T)ReceiveMessage();
+        }
+    }
+
+    public class UnityImporter
+    {
+        public UnityImporter()
+        {
+            pipe = new NamedPipeClientStreamSimple("MaxUnityBridge");
+        }
+
+        protected NamedPipeClientStreamSimple pipe;
 
         public void DoImport()
         {
             Debug.Log("Beginning import");
 
-            MakeConnection();
 
             MaxPing msg = new MaxPing();
             msg.msg = "my ping!";
 
-            BinaryFormatter formatter = new BinaryFormatter();
-            formatter.Serialize(pipe, msg);
+            pipe.SendMessage(msg);
 
-            pipe.Flush();
-
-            byte[] b = new byte[10000];
-            pipe.Read(b, 0, 10000);
-
-            Debug.Log((MessageSerializers.DeserializeObject(b) as MaxPing).msg);
+            Debug.Log(pipe.RecieveMessage<MaxPing>().msg);
         }
 
     }
