@@ -10,19 +10,22 @@ using System.ComponentModel;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 using Messages;
+using Winterdom.IO.FileMap;
 
 namespace MaxExporter
 {
-    public class MaxUnityExporter
+    public partial class MaxUnityExporter
     {
-        protected IGlobal global;
+        protected IGlobal globalInterface;
 
         public MaxUnityExporter(IGlobal global)
         {
-            this.global = global;
+            this.globalInterface = global;
         }
 
         NamedPipeStreamServer pipe;
+        MemoryMappedFile sharedmemory;
+        MapViewStream sharedmemoryview;
 
         public void StartServer()
         {
@@ -44,16 +47,89 @@ namespace MaxExporter
 
         void  pipe_MessageReceived(object sender, MessageEventArgs args)
         {
+            Log.Add("Received message from Unity.");
+
             try
             {
-                MaxPing p = MessageSerializers.DeserializeObject(args.Message) as MaxPing;
-                Log.Add(p.msg);
-                p.msg = "Hello Back";
-                pipe.SendMessage(MessageSerializers.SerializeObject(p));
+                UnityMessage message = MessageSerializers.DeserializeMessage<UnityMessage>(args.Message); //fails because we recieve back the same message just sent!!!???
+                processMessage(message);
             }
-            catch
+            catch(Exception e)
             {
-                Log.Add("Recieved message from MaxUnityBridge but could not deserialise it.");
+                Log.Add("Recieved message from MaxUnityBridge but could not process it: " + e.Message + e.StackTrace);
+            }
+        }
+
+        void pipe_MessageSend(MessageTypes type, UnityMessageParams parms)
+        {
+            var msg = new UnityMessage(type);
+            msg.Content = parms;
+            pipe.SendMessage(MessageSerializers.SerializeObject(msg));
+        }
+
+        void processMessage(UnityMessage message)
+        {
+            switch (message.MessageType)
+            {
+                case MessageTypes.Ping:
+                    sendPing();
+                    break;
+
+                case MessageTypes.RequestGeometry:
+                    sendGeometry();
+                    break;
+
+                default:
+                    string error = "Recieved unsupported message type: " + message.MessageType.ToString();
+                    Log.Add(error);
+                    sendError(error);
+                    break;
+            }
+        }
+
+        void sendError(string msg)
+        {
+            pipe_MessageSend(MessageTypes.Error, new MessageErrorParams(msg));
+        }
+
+        void sendPing()
+        {
+            pipe_MessageSend(MessageTypes.Ping, new MessagePingParams("Hello from Max!"));
+        }
+
+        void sendGeometry()
+        {
+            openSharedMemory(10000);
+
+            byte[] data = Encoding.Default.GetBytes("Geometry!".ToCharArray());
+            sharedmemoryview.Write(data);
+
+            pipe_MessageSend(MessageTypes.GeometryUpdate, new MessageGeometryUpdateParams(sharedmemory, 0, data.Length));
+        }
+
+        void openSharedMemory(int size)
+        {
+            if (sharedmemory != null)
+            {
+                if (sharedmemory.Size < size)
+                {
+                    if (sharedmemoryview != null)
+                    {
+                        sharedmemoryview.Close();
+                    }
+                    if (sharedmemory.IsOpen)
+                    {
+                        sharedmemory.Close();
+                    }
+                    sharedmemory = null;
+                }
+            }
+
+            if (sharedmemory == null)
+            {
+                string name = Guid.NewGuid().ToString();
+                sharedmemory = MemoryMappedFile.Create(MapProtection.PageReadWrite, size, name);
+                sharedmemoryview = sharedmemory.MapView(MapAccess.FileMapWrite, 0, size);
             }
         }
     }

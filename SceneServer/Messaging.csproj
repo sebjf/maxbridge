@@ -42,6 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileMap\FileMapIOException.cs" />
+    <Compile Include="FileMap\MapViewStream.cs" />
+    <Compile Include="FileMap\MemoryMappedFile.cs" />
+    <Compile Include="FileMap\Win32APIs.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="AsyncPipes\MessageSerializers.cs" />
     <Compile Include="AsyncPipes\MessageEventArgs.cs" />
@@ -51,7 +55,13 @@
     <Compile Include="AsyncPipes\NamedPipeStreamConnection.cs" />
     <Compile Include="AsyncPipes\NamedPipeStreamServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SharedMemory\SharedMemory.cs" />
+    <Compile Include="SharedMemory.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FileMap\Winterdom.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="FileMap\License.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

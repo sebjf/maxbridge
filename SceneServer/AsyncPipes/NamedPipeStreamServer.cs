@@ -82,7 +82,13 @@ namespace AsyncPipes
                     }
                     if (flag)
                     {
-                        connection.Disconnect();
+                        try
+                        {
+                            connection.Disconnect();
+                        }
+                        catch
+                        {
+                        }
                         if (list == null)
                         {
                             list = new List<NamedPipeStreamConnection>();

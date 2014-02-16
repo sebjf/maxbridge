@@ -11,8 +11,7 @@
     <RootNamespace>MaxUnityBridge</RootNamespace>
     <AssemblyName>MaxUnityBridgeImporter</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -40,13 +39,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Xml" />
     <Reference Include="UnityEditor">
       <HintPath>D:\Program Files (x86)\Unity\Editor\Data\Managed\UnityEditor.dll</HintPath>
     </Reference>
@@ -87,7 +79,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy /y "$(TargetDir)$(TargetName).*" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\"
-copy /y "$(TargetDir)Messaging.*" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\"</PostBuildEvent>
+copy /y "$(TargetDir)Messaging.*" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\"
+"D:\Program Files (x86)\Unity\Editor\Data\Mono\lib\mono\2.0\pdb2mdb.exe" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\$(TargetName).dll"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

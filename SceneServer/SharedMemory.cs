@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Winterdom.IO.FileMap;
 
-
-namespace AsyncPipes.SharedMemory
+namespace AsyncPipes
 {
-    /*
     unsafe public class SharedMemory
     {
         protected MemoryMappedFile memoryMappedFile;
-        protected MemoryMappedViewAccessor memoryMappedAccessor;
+        protected MapViewStream memoryMappedAccessor;
         protected string name;
         protected byte* ptr;
         public int size;
@@ -20,7 +19,7 @@ namespace AsyncPipes.SharedMemory
             ptr = (byte*)0;
         }
 
-        public byte* Open(string name)
+     /*   public byte* Open(string name)
         {
             if (this.name == name)
             {
@@ -40,7 +39,6 @@ namespace AsyncPipes.SharedMemory
             size = (int)memoryMappedAccessor.SafeMemoryMappedViewHandle.ByteLength;
 
             return ptr;
-        }
+        }*/
     }
-     * */
 }

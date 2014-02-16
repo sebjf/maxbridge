@@ -39,7 +39,10 @@ namespace AsyncPipes
             {
                 try
                 {
-                    this._Stream.BeginRead(asyncState, 0, NamedPipeStreamBase.BUFFER_LENGTH, new AsyncCallback(this.EndRead), asyncState);
+                    if (this._Stream.IsConnected)
+                    {
+                        this._Stream.BeginRead(asyncState, 0, NamedPipeStreamBase.BUFFER_LENGTH, new AsyncCallback(this.EndRead), asyncState);
+                    }
                 }
                 catch (ObjectDisposedException)
                 {

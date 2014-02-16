@@ -27,7 +27,19 @@ namespace MaxUnityBridge
             EditorGUILayout.LabelField("Max Unity Bridge Importer");
             if (GUILayout.Button("Button"))
             {
+                if (!doUpdate) { doUpdate = true; }
                 importer.DoImport();
+            }
+        }
+
+        bool doUpdate = false;
+
+        void Update()
+        {
+            if (doUpdate)
+            {
+               
+                doUpdate = false;
             }
         }
     }
