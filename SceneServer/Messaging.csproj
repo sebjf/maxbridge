@@ -42,6 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncStream\SocketStreamBase.cs" />
+    <Compile Include="AsyncStream\SocketStreamConnection.cs" />
+    <Compile Include="AsyncStream\SocketStreamServer.cs" />
+    <Compile Include="AsyncStream\MessageEvent.cs" />
     <Compile Include="FileMap\FileMapIOException.cs" />
     <Compile Include="FileMap\MapViewStream.cs" />
     <Compile Include="FileMap\MemoryMappedFile.cs" />

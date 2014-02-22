@@ -28,28 +28,28 @@ namespace AsyncStream
 
         private void EndRead(IAsyncResult result)
         {
-            int length = this._Stream.EndReceive(result);
-            byte[] asyncState = (byte[]) result.AsyncState;
-            if (length > 0)
+            try
             {
-                byte[] destinationArray = new byte[length];
-                Array.Copy(asyncState, 0, destinationArray, 0, length);
-                this.OnMessageReceived(new MessageEventArgs(destinationArray));
-            }
-            lock (this._InstanceLock)
-            {
-                try
+                int length = this._Stream.EndReceive(result);
+                byte[] asyncState = (byte[])result.AsyncState;
+                if (length > 0)
                 {
+                    byte[] destinationArray = new byte[length];
+                    Array.Copy(asyncState, 0, destinationArray, 0, length);
+                    this.OnMessageReceived(new MessageEventArgs(destinationArray));
+                }
+                lock (this._InstanceLock)
+                {
+
                     if (this._Stream.Connected)
                     {
                         this._Stream.BeginReceive(asyncState, 0, BUFFER_LENGTH, SocketFlags.None, new AsyncCallback(this.EndRead), asyncState);
                     }
                 }
-                catch (ObjectDisposedException)
-                {
-                    //Pipe closed
-                }
-
+            }
+            catch
+            {
+                //Socket Closed
             }
         }
 

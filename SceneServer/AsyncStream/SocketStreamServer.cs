@@ -7,7 +7,7 @@ using System.Net;
 
 namespace AsyncStream
 {
-    class SocketStreamServer : SocketStreamBase
+    public class SocketStreamServer : SocketStreamBase
     {
         public SocketStreamServer()
         {
@@ -15,15 +15,16 @@ namespace AsyncStream
         }
 
         protected int Port = 15155;
-        protected List<SocketStreamConnection> _Connections;
+        protected List<SocketStreamConnection> _Connections = new List<SocketStreamConnection>();
 
         private void StartListening()
         {
             /* http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.listen(v=vs.110).aspx */
 
             Socket listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            IPAddress hostIP = (Dns.GetHostEntry(IPAddress.Any.ToString())).AddressList[0];
+            IPAddress hostIP = Dns.GetHostAddresses("localhost").Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToArray()[0];
             listenSocket.Bind(new IPEndPoint(hostIP, Port));
+            listenSocket.Listen(10);
 
             listenSocket.BeginAccept(ClientConnected, listenSocket);  
         }
@@ -45,6 +46,70 @@ namespace AsyncStream
         private void Connection_MessageReceived(object sender, MessageEventArgs args)
         {
             this.OnMessageReceived(args);
+        }
+
+        public override void Disconnect()
+        {
+            lock (this._Connections)
+            {
+                foreach (SocketStreamConnection connection in this._Connections)
+                {
+                    try
+                    {
+                        connection.Disconnect();
+                    }
+                    catch
+                    {
+                    }
+                    this._Connections.Clear();
+                }
+            }
+        }
+
+        public override void SendMessage(byte[] message)
+        {
+            List<SocketStreamConnection> list = null;
+            bool flag = false;
+            lock (this._Connections)
+            {
+                foreach (SocketStreamConnection connection in this._Connections)
+                {
+                    try
+                    {
+                        flag = !connection.IsConnected;
+                        if (!flag)
+                        {
+                            connection.SendMessage(message);
+                        }
+                    }
+                    catch
+                    {
+                        flag = true;
+                    }
+                    if (flag)
+                    {
+                        try
+                        {
+                            connection.Disconnect();
+                        }
+                        catch
+                        {
+                        }
+                        if (list == null)
+                        {
+                            list = new List<SocketStreamConnection>();
+                        }
+                        list.Add(connection);
+                    }
+                }
+                if (list != null)
+                {
+                    foreach (SocketStreamConnection connection in list)
+                    {
+                        this._Connections.Remove(connection);
+                    }
+                }
+            }
         }
     }
 }

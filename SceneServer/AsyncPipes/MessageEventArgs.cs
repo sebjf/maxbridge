@@ -1,6 +1,4 @@
 
-
-
 //http://www.nullskull.com/a/1433/make-your-apps-talk-to-each-other-asynchronous-named-pipes-library.aspx
 
 namespace AsyncPipes

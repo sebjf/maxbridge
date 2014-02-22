@@ -1,27 +1,28 @@
 ﻿using System;
 using System.IO.Pipes;
+using AsyncStream;
+using System.Threading;
 
 namespace MonoPipeTest
 {
     class Program
     {
+
+        static ManualResetEvent resetEvent = new ManualResetEvent(false);
+
         static void Main(string[] args)
         {
-            NamedPipeClientStream pipe = new NamedPipeClientStream("MaxUnityBridge");
-            pipe.Connect();
+            server = new SocketStreamServer();
+            server.MessageReceived += new MessageEventHandler(server_MessageReceived);
 
-            do
-            {
-                byte[] data1 = new byte[] { 1, 2, 3, 4 };
+            while (true) { }
+        }
 
-                pipe.Write(data1, 0, data1.Length);
-                pipe.Flush();
-                pipe.WaitForPipeDrain();
+        static SocketStreamServer server;
 
-                byte[] datarx1 = new byte[4];
-                pipe.Read(datarx1, 0, 4);
-
-            } while (true);
+        static void server_MessageReceived(object sender, MessageEventArgs args)
+        {
+            server.SendMessage(new byte[] { 1, 2, 3 });
         }
     }
 }
