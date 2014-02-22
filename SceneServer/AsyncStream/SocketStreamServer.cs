@@ -9,8 +9,9 @@ namespace AsyncStream
 {
     public class SocketStreamServer : SocketStreamBase
     {
-        public SocketStreamServer()
+        public SocketStreamServer(int port)
         {
+            this.Port = port;
             StartListening();
         }
 
@@ -21,12 +22,22 @@ namespace AsyncStream
         {
             /* http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.listen(v=vs.110).aspx */
 
-            Socket listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             IPAddress hostIP = Dns.GetHostAddresses("localhost").Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToArray()[0];
             listenSocket.Bind(new IPEndPoint(hostIP, Port));
             listenSocket.Listen(10);
 
             listenSocket.BeginAccept(ClientConnected, listenSocket);  
+        }
+
+        private Socket listenSocket;
+
+        ~SocketStreamServer()
+        {
+            if (listenSocket != null)
+            {
+                listenSocket.Close();
+            }
         }
 
         private void ClientConnected(IAsyncResult result)

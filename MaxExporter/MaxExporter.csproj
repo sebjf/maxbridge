@@ -53,6 +53,7 @@
     <Compile Include="MaxExporterUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SceneExploration.cs" />
+    <Compile Include="SimpleStreamServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SceneServer\Messaging.csproj">

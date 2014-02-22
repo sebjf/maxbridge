@@ -51,7 +51,7 @@
     <Compile Include="FileMap\MemoryMappedFile.cs" />
     <Compile Include="FileMap\Win32APIs.cs" />
     <Compile Include="Messages.cs" />
-    <Compile Include="AsyncPipes\MessageSerializers.cs" />
+    <Compile Include="MessageSerializers.cs" />
     <Compile Include="AsyncPipes\MessageEventArgs.cs" />
     <Compile Include="AsyncPipes\MessageEventHandler.cs" />
     <Compile Include="AsyncPipes\NamedPipeStreamBase.cs" />

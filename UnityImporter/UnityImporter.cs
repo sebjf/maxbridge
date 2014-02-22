@@ -15,138 +15,21 @@ using Winterdom.IO.FileMap;
 
 namespace MaxUnityBridge
 {
-    public class NamedPipeSimpleClient
-    {
-        protected string name;
-        protected NamedPipeClientStream pipe;
-
-        public NamedPipeSimpleClient(string name)
-        {
-            this.name = name;
-            pipe = new NamedPipeClientStream(name);
-        }
-
-        public bool MakeConnection()
-        {
-            if (pipe == null)
-            {
-                pipe = new NamedPipeClientStream(name);
-            }
-
-            if (!pipe.IsConnected)
-            {
-                try
-                {
-                    pipe.Connect(1000);
-                }
-                catch
-                {
-                    Debug.Log("Could not find Max!");
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public void SendMessage(object message)
-        {
-            if (MakeConnection())
-            {
-                byte[] data = MessageSerializers.SerializeObject(message);
-                byte[] dataLength = BitConverter.GetBytes(data.Length);
-
-                pipe.Write(dataLength, 0, dataLength.Length);
-                pipe.Flush();
-                pipe.WaitForPipeDrain();
-
-                pipe.Write(data, 0, data.Length);
-                pipe.Flush();
-                pipe.WaitForPipeDrain();
-            }
-        }
-
-        public object ReceiveMessage()
-        {
-            try
-            {
-                byte[] dataLength = new byte[4];
-                pipe.Read(dataLength, 0, 4);
-                int msglength = BitConverter.ToInt32(dataLength, 0);
-
-                byte[] data = new byte[msglength];
-                
-                int read = 0;
-                do
-                {
-                    read += pipe.Read(data, read, msglength - read);
-                } while (read < msglength);
-
-                return MessageSerializers.DeserializeObject(data);
-      //        BinaryFormatter formatter = new BinaryFormatter();
-      //        return formatter.Deserialize(pipe);
-            }
-            catch
-            {
-                Debug.Log("Could not recieve message, there may be garbage in the pipe. Closing it...");
-                try
-                {
-                    pipe.Dispose();
-                }
-                catch { }
-                pipe = null;
-                return null;
-            }
-        }
-
-        public T RecieveMessage<T>()
-        {
-            return (T)ReceiveMessage();
-        }
-    }
-
     public class UnityImporter
     {
         public UnityImporter()
         {
-            pipe = new NamedPipeSimpleClient("MaxUnityBridge");
+            pipe = new SimpleStreamClient(15155);
         }
 
-        protected NamedPipeSimpleClient pipe;
+        protected SimpleStreamClient pipe;
         protected MemoryMappedFile sharedmemory;
         protected MapViewStream sharedmemoryview;
 
         protected BinaryFormatter formatter = new BinaryFormatter();
 
-        public void Test()
-        {
-            NamedPipeClientStream pipe = new NamedPipeClientStream("MaxUnityBridge");
-            pipe.Connect();
-
-            do
-            {
-
-                UnityMessage message = new UnityMessage(MessageTypes.RequestGeometry);
-
-          //      byte[] data = MessageSerializers.SerializeObject(message);
-          //      byte[] dataLength = BitConverter.GetBytes(data.Length);
-
-                byte[] data1 = new byte[] { 1, 2, 3, 4 };
-
-                pipe.Write(data1, 0, data1.Length);
-                pipe.Flush();
-                pipe.WaitForPipeDrain();
-
-                byte[] datarx1 = new byte[4];
-                pipe.Read(datarx1, 0, 4);
-
-            } while (true);
-        }
-
         public void DoImport()
         {
-            Test();
-
             Debug.Log("Beginning import");
 
             try
@@ -223,7 +106,7 @@ namespace MaxUnityBridge
 
         protected void updateGeometryStream(MessageGeometryUpdateStream message)
         {
-            DoImport();
+
         }
     }
 }

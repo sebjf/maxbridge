@@ -12,7 +12,7 @@ namespace MonoPipeTest
 
         static void Main(string[] args)
         {
-            server = new SocketStreamServer();
+            server = new SocketStreamServer(15155);
             server.MessageReceived += new MessageEventHandler(server_MessageReceived);
 
             while (true) { }
