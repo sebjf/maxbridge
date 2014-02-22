@@ -14,6 +14,55 @@ using Winterdom.IO.FileMap;
 
 namespace MaxExporter
 {
+    /* This is mostly to ensure that the messages are prepended with the length by hiding the original send methods */
+    public class NamedPipeSimpleServer
+    {
+        NamedPipeStreamServer pipe;
+
+        public NamedPipeSimpleServer(string Name, MessageReceiveHandler ReceiveEventHandler)
+        {
+            try
+            {
+                pipe = new NamedPipeStreamServer(Name);
+                pipe.MessageReceived += new MessageEventHandler(ReceiveMessage);
+                messageReceiveHandler = ReceiveEventHandler; 
+            }
+            catch
+            {
+                Log.Add("Could not start MaxUnityBridge");
+            }
+        }
+
+        public void SendMessage(UnityMessage message)
+        {
+            byte[] messageData = MessageSerializers.SerializeObject(message);
+            byte[] messageLen = BitConverter.GetBytes(messageData.Length);
+            pipe.SendMessage(messageLen.Concat(messageData).ToArray());
+        }
+
+        protected void ReceiveMessage(object sender, MessageEventArgs args)
+        {
+            Log.Add("Received message from Unity.");
+
+            try
+            {
+                int messageLength = BitConverter.ToInt32(args.Message, 0);
+                UnityMessage message = MessageSerializers.DeserializeMessage<UnityMessage>(args.Message, sizeof(Int32)); //fails because we recieve back the same message just sent!!!???
+                if (messageReceiveHandler != null)
+                {
+                    messageReceiveHandler(message);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Add("Recieved message from MaxUnityBridge but could not process it: " + e.Message + e.StackTrace);
+            }
+        }
+
+        public delegate void MessageReceiveHandler(UnityMessage message);
+        protected MessageReceiveHandler messageReceiveHandler;
+    }
+
     public partial class MaxUnityExporter
     {
         protected IGlobal globalInterface;
@@ -23,48 +72,18 @@ namespace MaxExporter
             this.globalInterface = global;
         }
 
-        NamedPipeStreamServer pipe;
+        NamedPipeSimpleServer pipe;
         MemoryMappedFile sharedmemory;
         MapViewStream sharedmemoryview;
 
         public void StartServer()
         {
-            try
-            {
-                pipe = new NamedPipeStreamServer("MaxUnityBridge");
-                pipe.MessageReceived += new MessageEventHandler(pipe_MessageReceived);
-            }
-            catch
-            {
-                Log.Add("Could not start MaxUnityBridge");
-            }
+            pipe = new NamedPipeSimpleServer("MaxUnityBridge", processMessage);
         }
 
         public void StopServer()
         {
             //pipe.Disconnect();
-        }
-
-        void  pipe_MessageReceived(object sender, MessageEventArgs args)
-        {
-            Log.Add("Received message from Unity.");
-
-            try
-            {
-                UnityMessage message = MessageSerializers.DeserializeMessage<UnityMessage>(args.Message); //fails because we recieve back the same message just sent!!!???
-                processMessage(message);
-            }
-            catch(Exception e)
-            {
-                Log.Add("Recieved message from MaxUnityBridge but could not process it: " + e.Message + e.StackTrace);
-            }
-        }
-
-        void pipe_MessageSend(MessageTypes type, UnityMessageParams parms)
-        {
-            var msg = new UnityMessage(type);
-            msg.Content = parms;
-            pipe.SendMessage(MessageSerializers.SerializeObject(msg));
         }
 
         void processMessage(UnityMessage message)
@@ -76,7 +95,7 @@ namespace MaxExporter
                     break;
 
                 case MessageTypes.RequestGeometry:
-                    sendGeometry();
+                    sendGeometryMemory();
                     break;
 
                 default:
@@ -89,23 +108,22 @@ namespace MaxExporter
 
         void sendError(string msg)
         {
-            pipe_MessageSend(MessageTypes.Error, new MessageErrorParams(msg));
+            pipe.SendMessage(new MessageError(msg));
         }
 
         void sendPing()
         {
-            pipe_MessageSend(MessageTypes.Ping, new MessagePingParams("Hello from Max!"));
+            pipe.SendMessage(new MessagePing("Hello from Max!"));
         }
 
-        void sendGeometry()
+        void sendGeometryMemory()
         {
-            openSharedMemory(10000);
-
-            byte[] data = Encoding.Default.GetBytes("Geometry!".ToCharArray());
-            sharedmemoryview.Write(data);
-
-            pipe_MessageSend(MessageTypes.GeometryUpdate, new MessageGeometryUpdateParams(sharedmemory, 0, data.Length));
+            openSharedMemory(1000000);
+            StreamWriter writer = new StreamWriter(sharedmemoryview);
+            writer.WriteLine("Hello From Max Via Memory!");
+            pipe.SendMessage(new MessageGeometryUpdateMemory(sharedmemory, 0, 0));
         }
+
 
         void openSharedMemory(int size)
         {

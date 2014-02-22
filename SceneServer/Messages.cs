@@ -15,10 +15,11 @@ namespace Messages
     [Serializable]
     public enum MessageTypes : int
     {
-        Ping                = 0,
-        RequestGeometry     = 1,
-        GeometryUpdate      = 2,
-        Error               = 3,
+        Ping,
+        RequestGeometry,
+        GeometryUpdateStream,
+        GeometryUpdateMemory,
+        Error,
     }
 
     [Serializable]
@@ -30,52 +31,46 @@ namespace Messages
         }
 
         public MessageTypes MessageType;
-        public UnityMessageParams Content;
     }
 
     [Serializable]
-    public abstract class UnityMessageParams
-    {
-    }
-
-    [Serializable]
-    public class MessageErrorParams : UnityMessageParams
+    public class MessageError : UnityMessage
     {
         public string message;
 
-        public MessageErrorParams(string msg)
+        public MessageError(string msg) : base(MessageTypes.Error)
         {
             message = msg;
         }
     }
 
     [Serializable]
-    public class MessagePingParams : UnityMessageParams
+    public class MessagePing : UnityMessage
     {
         public string message;
 
-        public MessagePingParams(string msg)
+        public MessagePing(string msg) : base(MessageTypes.Ping)
         {
             message = msg;
         }
     }
 
     [Serializable]
-    public class MessageGeometryUpdateParams : UnityMessageParams
+    public class MessageGeometryUpdateMemory : UnityMessage
     {
         public SharedMemoryInfo sharedMemory;
 
         public long geometryOffset;
         public long length;
 
-        public MessageGeometryUpdateParams(MemoryMappedFile sharedMemory, long offset, long length)
+        public MessageGeometryUpdateMemory(MemoryMappedFile sharedMemory, long offset, long length) : base(MessageTypes.GeometryUpdateMemory)
         {
             this.length = length;
             this.geometryOffset = offset;
             this.sharedMemory = new SharedMemoryInfo(sharedMemory);
         }
 
-        public MessageGeometryUpdateParams(SharedMemoryInfo sharedMemory, long offset, long length)
+        public MessageGeometryUpdateMemory(SharedMemoryInfo sharedMemory, long offset, long length) : base(MessageTypes.GeometryUpdateMemory)
         {
             this.length = length;
             this.geometryOffset = offset;
@@ -97,18 +92,21 @@ namespace Messages
     }
 
     [Serializable]
-    public class GeometryInfo
+    public class MessageGeometryUpdateStream : UnityMessage
     {
-        SharedMemoryInfo Memory;
+        public MessageGeometryUpdateStream()
+            : base(MessageTypes.GeometryUpdateStream)
+        {
 
-        public string Name;
-
-        public int VertexCount;
-
-        public IntPtr PositionPtr;
-        public IntPtr UVCoordPtr;
-        public IntPtr NormalPtr;
-
-
+        }
     }
+
+    [Serializable]
+    public class GeometryUpdate
+    {
+        float[] Vertices;
+        int[] faces;
+    }
+
+
 }

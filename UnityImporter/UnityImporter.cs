@@ -15,12 +15,12 @@ using Winterdom.IO.FileMap;
 
 namespace MaxUnityBridge
 {
-    public class NamedPipeClientStreamSimple
+    public class NamedPipeSimpleClient
     {
         protected string name;
         protected NamedPipeClientStream pipe;
 
-        public NamedPipeClientStreamSimple(string name)
+        public NamedPipeSimpleClient(string name)
         {
             this.name = name;
             pipe = new NamedPipeClientStream(name);
@@ -49,18 +49,20 @@ namespace MaxUnityBridge
             return true;
         }
 
-
-
         public void SendMessage(object message)
         {
             if (MakeConnection())
             {
                 byte[] data = MessageSerializers.SerializeObject(message);
-                pipe.Write(data, 0, data.Length);
-      /*          BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(pipe, message);
+                byte[] dataLength = BitConverter.GetBytes(data.Length);
+
+                pipe.Write(dataLength, 0, dataLength.Length);
                 pipe.Flush();
-                pipe.WaitForPipeDrain(); */
+                pipe.WaitForPipeDrain();
+
+                pipe.Write(data, 0, data.Length);
+                pipe.Flush();
+                pipe.WaitForPipeDrain();
             }
         }
 
@@ -68,19 +70,21 @@ namespace MaxUnityBridge
         {
             try
             {
-                MemoryStream memstream = new MemoryStream();
-                byte[] data = new byte[10000];
-                while(pipe.
+                byte[] dataLength = new byte[4];
+                pipe.Read(dataLength, 0, 4);
+                int msglength = BitConverter.ToInt32(dataLength, 0);
+
+                byte[] data = new byte[msglength];
+                
                 int read = 0;
                 do
                 {
-                    read = pipe.Read(data, 0, 10000);
-                    memstream.Write(data, 0, read);
-                } while (read > 0);
+                    read += pipe.Read(data, read, msglength - read);
+                } while (read < msglength);
 
-                return MessageSerializers.DeserializeObject(memstream.ToArray());
-      //          BinaryFormatter formatter = new BinaryFormatter();
-       //         return formatter.Deserialize(pipe);
+                return MessageSerializers.DeserializeObject(data);
+      //        BinaryFormatter formatter = new BinaryFormatter();
+      //        return formatter.Deserialize(pipe);
             }
             catch
             {
@@ -105,17 +109,44 @@ namespace MaxUnityBridge
     {
         public UnityImporter()
         {
-            pipe = new NamedPipeClientStreamSimple("MaxUnityBridge");
+            pipe = new NamedPipeSimpleClient("MaxUnityBridge");
         }
 
-        protected NamedPipeClientStreamSimple pipe;
+        protected NamedPipeSimpleClient pipe;
         protected MemoryMappedFile sharedmemory;
         protected MapViewStream sharedmemoryview;
 
         protected BinaryFormatter formatter = new BinaryFormatter();
 
+        public void Test()
+        {
+            NamedPipeClientStream pipe = new NamedPipeClientStream("MaxUnityBridge");
+            pipe.Connect();
+
+            do
+            {
+
+                UnityMessage message = new UnityMessage(MessageTypes.RequestGeometry);
+
+          //      byte[] data = MessageSerializers.SerializeObject(message);
+          //      byte[] dataLength = BitConverter.GetBytes(data.Length);
+
+                byte[] data1 = new byte[] { 1, 2, 3, 4 };
+
+                pipe.Write(data1, 0, data1.Length);
+                pipe.Flush();
+                pipe.WaitForPipeDrain();
+
+                byte[] datarx1 = new byte[4];
+                pipe.Read(datarx1, 0, 4);
+
+            } while (true);
+        }
+
         public void DoImport()
         {
+            Test();
+
             Debug.Log("Beginning import");
 
             try
@@ -149,27 +180,29 @@ namespace MaxUnityBridge
             switch (message.MessageType)
             {
                 case MessageTypes.Ping:
-                    Debug.Log((message.Content as MessagePingParams).message);
+                    Debug.Log((message as MessagePing).message);
                     break;
 
-                case MessageTypes.GeometryUpdate:
-                    updateGeometry(message.Content as MessageGeometryUpdateParams);
+                case MessageTypes.GeometryUpdateMemory:
+                    updateGeometryMemory(message as MessageGeometryUpdateMemory);
+                    break;
+
+                case MessageTypes.GeometryUpdateStream:
+                    updateGeometryStream(message as MessageGeometryUpdateStream);
                     break;
 
                 case MessageTypes.Error:
-                    Debug.Log("Max encountered an error: " + (message.Content as MessageErrorParams).message);
+                    Debug.Log("Max encountered an error: " + (message as MessageError).message);
                     break;
             }
         }
 
-        protected void updateGeometry(MessageGeometryUpdateParams message)
+        protected void updateGeometryMemory(MessageGeometryUpdateMemory message)
         {
             openSharedMemory(message.sharedMemory);
 
-            byte[] data = new byte[message.length];
-            sharedmemoryview.Read(data, (int)message.geometryOffset, (int)message.length);
-            string s = Encoding.Default.GetString(data);
-            Debug.Log(s);
+            StreamReader reader = new StreamReader(sharedmemoryview);
+            Debug.Log(reader.ReadLine());
         }
 
         protected void openSharedMemory(SharedMemoryInfo sharedMemoryInfo)
@@ -186,6 +219,11 @@ namespace MaxUnityBridge
 
             sharedmemory = MemoryMappedFile.Open(MapAccess.FileMapRead, sharedMemoryInfo.name);
             sharedmemoryview = sharedmemory.MapView(MapAccess.FileMapRead, 0, sharedMemoryInfo.size);
+        }
+
+        protected void updateGeometryStream(MessageGeometryUpdateStream message)
+        {
+            DoImport();
         }
     }
 }

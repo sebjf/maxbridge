@@ -16,6 +16,14 @@ namespace AsyncPipes
            return ms.ToArray();
        }
 
+       public static T DeserializeMessage<T>(byte[] bMessage, int offset)
+       {
+           BinaryFormatter formatter = new BinaryFormatter();
+           MemoryStream ms = new MemoryStream(bMessage, offset, bMessage.Length - offset);
+           Object message = formatter.Deserialize(ms);
+           return (T)message;
+       }
+
        public static T DeserializeMessage<T>(byte[]  bMessage)
        {
            BinaryFormatter formatter = new BinaryFormatter();
