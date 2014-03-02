@@ -84,7 +84,7 @@ namespace UnityTest
                 {
                     case MessageTypes.RequestGeometry:
 
-                        UnityMessage reply = new MessageGeometryUpdateStream();
+                        UnityMessage reply = new MessageGeometryUpdateStream(null);
                         byte[] replyData = MessageSerializers.SerializeMessage(reply);
                         stream.Write(BitConverter.GetBytes(replyData.Length), 0, 4);
                         stream.Write(replyData, 0, replyData.Length);

@@ -34,7 +34,6 @@ namespace MaxExporter
 
         public void StopServer()
         {
-            //pipe.Disconnect();
         }
 
         void processMessage(UnityMessage message)
@@ -46,7 +45,7 @@ namespace MaxExporter
                     break;
 
                 case MessageTypes.RequestGeometry:
-                    sendGeometryMemory();
+                    sendGeometryUpdate();
                     break;
 
                 default:
@@ -65,6 +64,11 @@ namespace MaxExporter
         void sendPing()
         {
             pipe.SendMessage(new MessagePing("Hello from Max!"));
+        }
+
+        void sendGeometryUpdate()
+        {
+            sendGeometryStream();
         }
 
         void sendGeometryMemory()
@@ -100,6 +104,11 @@ namespace MaxExporter
                 sharedmemory = MemoryMappedFile.Create(MapProtection.PageReadWrite, size, name);
                 sharedmemoryview = sharedmemory.MapView(MapAccess.FileMapWrite, 0, size);
             }
+        }
+
+        void sendGeometryStream()
+        {
+            pipe.SendMessage(new MessageGeometryUpdateStream(createGeometryUpdate()));
         }
     }
 }

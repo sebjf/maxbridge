@@ -50,6 +50,7 @@
     <Compile Include="FileMap\MapViewStream.cs" />
     <Compile Include="FileMap\MemoryMappedFile.cs" />
     <Compile Include="FileMap\Win32APIs.cs" />
+    <Compile Include="MaxTypes.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="MessageSerializers.cs" />
     <Compile Include="AsyncPipes\MessageEventArgs.cs" />

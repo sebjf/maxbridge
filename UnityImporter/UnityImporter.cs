@@ -15,12 +15,16 @@ using Winterdom.IO.FileMap;
 
 namespace MaxUnityBridge
 {
-    public class UnityImporter
+    public partial class UnityImporter
     {
         public UnityImporter()
         {
             pipe = new SimpleStreamClient(15155);
+
+            UpdateProcessor = new UpdateProcessor();
         }
+
+        public UpdateProcessor UpdateProcessor { get; set; }
 
         protected SimpleStreamClient pipe;
         protected MemoryMappedFile sharedmemory;
@@ -106,7 +110,7 @@ namespace MaxUnityBridge
 
         protected void updateGeometryStream(MessageGeometryUpdateStream message)
         {
-
+            UpdateProcessor.ProcessUpdate(message.Geometry);
         }
     }
 }

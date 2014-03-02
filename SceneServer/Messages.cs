@@ -94,18 +94,20 @@ namespace Messages
     [Serializable]
     public class MessageGeometryUpdateStream : UnityMessage
     {
-        public MessageGeometryUpdateStream()
-            : base(MessageTypes.GeometryUpdateStream)
+        public MessageGeometryUpdateStream(GeometryUpdate update) : base(MessageTypes.GeometryUpdateStream)
         {
-
+            this.Geometry = update;
         }
+
+        public GeometryUpdate Geometry;
     }
 
     [Serializable]
     public class GeometryUpdate
     {
-        float[] Vertices;
-        int[] faces;
+        public string Name;
+        public Point3[] Vertices;
+        public Face[] Faces;
     }
 
 

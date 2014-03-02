@@ -10,10 +10,10 @@ namespace MaxExporter
     {
         public IEnumerable<IINode> GetGeometryNode(string Name)
         {
-            return (GeometryNodes.Where(n => (n.Name == Name)));
+            return (TriGeometryNodes.Where(n => (n.Name == Name)));
         }
 
-        public IEnumerable<IINode> GeometryNodes
+        public IEnumerable<IINode> TriGeometryNodes
         {
             get
             {

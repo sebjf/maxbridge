@@ -51,6 +51,7 @@
     <Compile Include="SimpleStreamClient.cs" />
     <Compile Include="UnityImporter.cs" />
     <Compile Include="UnityImporterWindow.cs" />
+    <Compile Include="UpdateProcessor.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -79,9 +80,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /y "$(TargetDir)$(TargetName).*" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\"
-copy /y "$(TargetDir)Messaging.*" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\"
-"D:\Program Files (x86)\Unity\Editor\Data\Mono\lib\mono\2.0\pdb2mdb.exe" "D:\Oculus Rift\My Demos\Titanic\Titanic Unity Project\Assets\$(TargetName).dll"</PostBuildEvent>
+    <PostBuildEvent>copy /y "$(TargetDir)$(TargetName).*" "D:\Projects\Unity Import Test\Assets\"
+copy /y "$(TargetDir)Messaging.*" "D:\Projects\Unity Import Test\Assets\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

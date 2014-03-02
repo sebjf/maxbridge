@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "SceneServer\Me
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityTest", "UnityTest\UnityTest.csproj", "{4E79B614-0677-46E5-BC0A-DA0027553908}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoPipeTest", "MonoPipeTest\MonoPipeTest.csproj", "{F934C67F-341A-438B-9F06-592670447ECB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,16 +59,6 @@ Global
 		{4E79B614-0677-46E5-BC0A-DA0027553908}.Release|Mixed Platforms.Build.0 = Release|x86
 		{4E79B614-0677-46E5-BC0A-DA0027553908}.Release|x86.ActiveCfg = Release|x86
 		{4E79B614-0677-46E5-BC0A-DA0027553908}.Release|x86.Build.0 = Release|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Debug|x86.ActiveCfg = Debug|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Debug|x86.Build.0 = Debug|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Release|Any CPU.ActiveCfg = Release|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Release|Mixed Platforms.Build.0 = Release|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Release|x86.ActiveCfg = Release|x86
-		{F934C67F-341A-438B-9F06-592670447ECB}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
