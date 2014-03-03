@@ -110,7 +110,10 @@ namespace MaxUnityBridge
 
         protected void updateGeometryStream(MessageGeometryUpdateStream message)
         {
-            UpdateProcessor.ProcessUpdate(message.Geometry);
+            foreach (var g in message.Geometries)
+            {
+                UpdateProcessor.ProcessUpdate(g);
+            }
         }
     }
 }

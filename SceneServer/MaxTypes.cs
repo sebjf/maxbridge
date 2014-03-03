@@ -5,6 +5,18 @@ using System.Text;
 
 namespace Messages
 {
+
+    /* The Quaternion class defined by Max. Note that in the Max SDK [x,y,z] is the axis of rotation and w is the angle. Rotation convention is left hand for the API. */
+    
+    [Serializable]
+    public unsafe struct Quat
+    {
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+    }
+
     /* These definitions mirror the unmanaged types used within the 3ds max Mesh class - http://download.autodesk.com/global/docs/3dsmaxsdk2012/en_us/index.html */
 
     /* The Point3 type is used to store vertices and normals, the managed equivalent is IPoint3 

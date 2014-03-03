@@ -74,6 +74,7 @@ namespace MaxExporter
                 {
                     messageReceiveHandler(message);
                 }
+                MessageData = null;
             }
         }
 

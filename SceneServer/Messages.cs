@@ -94,18 +94,32 @@ namespace Messages
     [Serializable]
     public class MessageGeometryUpdateStream : UnityMessage
     {
-        public MessageGeometryUpdateStream(GeometryUpdate update) : base(MessageTypes.GeometryUpdateStream)
+        public MessageGeometryUpdateStream(IEnumerable<GeometryUpdate> updates)
+            : base(MessageTypes.GeometryUpdateStream)
         {
-            this.Geometry = update;
+            this.Geometries = updates.ToArray();
         }
 
-        public GeometryUpdate Geometry;
+        public GeometryUpdate[] Geometries;
+    }
+
+    [Serializable]
+    public struct TransformComponents
+    {
+        public Point3 Translate;
+        public Quat Rotation;
+        public Quat ScaleRotation;
+        public Point3 Scale;
     }
 
     [Serializable]
     public class GeometryUpdate
     {
         public string Name;
+        public string Parent;
+
+        public TransformComponents Transform;
+
         public Point3[] Vertices;
         public Face[] Faces;
     }

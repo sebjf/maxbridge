@@ -29,58 +29,58 @@ namespace MaxExporter
 
         public void StartServer()
         {
-            pipe = new SimpleStreamServer("MaxUnityBridge", processMessage);
+            pipe = new SimpleStreamServer("MaxUnityBridge", ProcessMessage);
         }
 
         public void StopServer()
         {
         }
 
-        void processMessage(UnityMessage message)
+        protected void ProcessMessage(UnityMessage message)
         {
             switch (message.MessageType)
             {
                 case MessageTypes.Ping:
-                    sendPing();
+                    SendPing();
                     break;
 
                 case MessageTypes.RequestGeometry:
-                    sendGeometryUpdate();
+                    SendGeometryUpdate();
                     break;
 
                 default:
                     string error = "Recieved unsupported message type: " + message.MessageType.ToString();
                     Log.Add(error);
-                    sendError(error);
+                    SendError(error);
                     break;
             }
         }
 
-        void sendError(string msg)
+        protected void SendError(string msg)
         {
             pipe.SendMessage(new MessageError(msg));
         }
 
-        void sendPing()
+        protected void SendPing()
         {
             pipe.SendMessage(new MessagePing("Hello from Max!"));
         }
 
-        void sendGeometryUpdate()
+        protected void SendGeometryUpdate()
         {
-            sendGeometryStream();
+            SendGeometryStream();
         }
 
-        void sendGeometryMemory()
+        protected void SendGeometryMemory()
         {
-            openSharedMemory(1000000);
+            OpenSharedMemory(1000000);
             StreamWriter writer = new StreamWriter(sharedmemoryview);
             writer.WriteLine("Hello From Max Via Memory!");
             pipe.SendMessage(new MessageGeometryUpdateMemory(sharedmemory, 0, 1000000));
         }
 
 
-        void openSharedMemory(int size)
+        protected void OpenSharedMemory(int size)
         {
             if (sharedmemory != null)
             {
@@ -106,9 +106,9 @@ namespace MaxExporter
             }
         }
 
-        void sendGeometryStream()
+        protected void SendGeometryStream()
         {
-            pipe.SendMessage(new MessageGeometryUpdateStream(createGeometryUpdate()));
+            pipe.SendMessage(new MessageGeometryUpdateStream(CreateUpdates()));
         }
     }
 }
