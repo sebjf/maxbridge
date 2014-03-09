@@ -47,10 +47,14 @@ namespace MaxUnityBridge
                 meshFilter.mesh = new Mesh();
             }
 
-            UpdateMesh(meshFilter.sharedMesh, Update);
+            var materialsMap = UpdateMesh(meshFilter.sharedMesh, Update);
 
             meshRenderer.materials = new Material[meshFilter.sharedMesh.subMeshCount];
 
+            foreach (var p in materialsMap)
+            {
+                meshRenderer.materials[p.Key] = ImportMaterial(Update.Materials[p.Value]);
+            }
         }
 
         protected void SetTransform(GameObject node, TransformComponents components)
@@ -63,20 +67,11 @@ namespace MaxUnityBridge
             
             if (scaleRotation != Quaternion.identity)
             {
-                Debug.Log("Nonidentity scale rotation from Max. The scale may be incorrectly applied. Consider baking in Max.");
+                Debug.Log("Nonidentity scale rotation from Max. Consider applying Reset XForm modifier and re-importing.");
             }
 
             Quaternion Rotation = new Quaternion(components.Rotation.x, components.Rotation.y, components.Rotation.z, components.Rotation.w);
             Vector3 angles = Quaternion.ToEulerAngles(Rotation);
-
-
-            Vector3 axis = new Vector3(components.Rotation.x, components.Rotation.z, components.Rotation.y);
-            axis.Normalize();
-
-      //      axis = Quaternion.AngleAxis(90, Vector3.left) * axis;
-            
-            //Quaternion Rotation = Quaternion.AngleAxis(components.Rotation.w * Mathf.Rad2Deg, axis);// *Quaternion.AngleAxis(90, Vector3.left);
-
             Rotation = Quaternion.EulerAngles(angles.x, angles.z, angles.y);
             
             Vector3 Scale = new Vector3(components.Scale.x, components.Scale.z, components.Scale.y);
@@ -105,7 +100,7 @@ namespace MaxUnityBridge
             return node;
         }
 
-        unsafe protected void UpdateMesh(Mesh mesh, GeometryUpdate Update)
+        unsafe protected Dictionary<int,int> UpdateMesh(Mesh mesh, GeometryUpdate Update)
         {
 
             //http://docs.unity3d.com/Documentation/ScriptReference/Mesh.html
@@ -143,15 +138,28 @@ namespace MaxUnityBridge
                 faceLists[materialid].Add((int)Update.Faces[i].v.v3);
             }
 
+            Dictionary<int, int> materialsMap = new Dictionary<int, int>();
+
             mesh.subMeshCount = faceLists.Values.Count;
 
             for (int i = 0; i < faceLists.Values.Count; i++)
             {
                 mesh.SetTriangles(faceLists.Values.ElementAt(i).ToArray(), i);
+
+                materialsMap.Add(i, faceLists.Keys.ElementAt(i));
             }
 
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
+
+            return materialsMap;
+        }
+
+        protected Material ImportMaterial(MaterialInformation m)
+        {
+            Material material = new Material("");
+
+            return material;
         }
     }
 }

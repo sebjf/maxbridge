@@ -215,12 +215,12 @@ namespace Winterdom.IO.FileMap
 
       #region IDisposable Implementation
 
-      public void Dispose()
+      new public void Dispose()
       {
          Dispose(true);
       }
 
-      protected virtual void Dispose(bool disposing)
+      new protected virtual void Dispose(bool disposing)
       {
          if ( IsOpen ) 
          {

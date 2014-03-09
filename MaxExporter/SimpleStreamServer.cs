@@ -35,8 +35,6 @@ namespace MaxExporter
 
         protected void ReceiveMessage(object sender, MessageEventArgs args)
         {
-            Log.Add("Received message from Unity.");
-
             try
             {
                 ReceiveMessagePart(args.Message);                
@@ -69,6 +67,8 @@ namespace MaxExporter
 
             if (Received >= MessageData.Length)
             {
+                Log.Add("Received message from Unity.");
+
                 UnityMessage message = MessageSerializers.DeserializeMessage<UnityMessage>(MessageData);
                 if (messageReceiveHandler != null)
                 {

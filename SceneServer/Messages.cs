@@ -122,7 +122,22 @@ namespace Messages
 
         public Point3[] Vertices;
         public Face[] Faces;
+
+        public List<MaterialInformation> Materials = new List<MaterialInformation>();
     }
 
+    [Serializable]
+    public class MaterialInformation
+    {
+        public string Class;
+        public Dictionary<string, string> MaterialProperties = new Dictionary<string, string>();
+        public Dictionary<string, MapInformation> MaterialMaps = new Dictionary<string, MapInformation>();
+    }
+
+    [Serializable]
+    public class MapInformation
+    {
+        public string Filename;
+    }
 
 }

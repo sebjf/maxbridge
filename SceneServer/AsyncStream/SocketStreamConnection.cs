@@ -28,7 +28,17 @@ namespace AsyncStream
 
         private void EndRead(IAsyncResult result)
         {
-            int length = this._Stream.EndReceive(result);
+            int length = 0;
+            try
+            {
+                length = this._Stream.EndReceive(result);
+            }
+            catch
+            {
+                //the connection has been closed
+                return;
+            }
+
             byte[] asyncState = (byte[])result.AsyncState;
             if (length > 0)
             {
@@ -36,6 +46,7 @@ namespace AsyncStream
                 Array.Copy(asyncState, 0, destinationArray, 0, length);
                 this.OnMessageReceived(new MessageEventArgs(destinationArray));
             }
+
             lock (this._InstanceLock)
             {
 

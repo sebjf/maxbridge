@@ -54,6 +54,8 @@ namespace MaxExporter
                 CopyMemory((IntPtr)faceData, maxMesh.Faces[0].Handle, (uint)(sizeof(Face) * maxMesh.NumFaces));
             }
 
+            update.Materials.AddRange(GetNodeMaterials(node.Mtl));
+
             return update;
         }
 
