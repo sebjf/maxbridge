@@ -130,14 +130,32 @@ namespace Messages
     public class MaterialInformation
     {
         public string Class;
-        public Dictionary<string, string> MaterialProperties = new Dictionary<string, string>();
-        public Dictionary<string, MapInformation> MaterialMaps = new Dictionary<string, MapInformation>();
+        public Dictionary<string, object> MaterialProperties = new Dictionary<string, object>();
     }
 
     [Serializable]
     public class MapInformation
     {
         public string Filename;
+    }
+
+    [Serializable]
+    public struct fRGBA
+    {
+        public float r, g, b, a;
+
+        public fRGBA(float r, float g, float b, float a)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            this.a = a;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0} {1} {2} {3}", r, g, b, a);
+        }
     }
 
 }

@@ -43,18 +43,16 @@ namespace MaxExporter
 
         MaterialInformation GetMaterialProperties(IMtl material)
         {
-
             MaterialInformation m = new MaterialInformation();
             m.Class = material.ClassName;
 
-            foreach (var p in EnumerateProperties(material).Where(p => p.IsMapType))
+            foreach (var p in EnumerateProperties(material))
             {
-                m.MaterialMaps.Add(p.Name, p.GetValueAsMap());
-            }
-
-            foreach (var p in EnumerateProperties(material).Where(p => p.IsValueType))
-            {
-                m.MaterialProperties.Add(p.Name, p.GetValueAsString());
+                m.MaterialProperties.Add(p.Name, p.GetValue());
+                if (p.InternalName != null)
+                {
+                    m.MaterialProperties.Add(p.InternalName, p.GetValue());
+                }
             }
 
             return m;

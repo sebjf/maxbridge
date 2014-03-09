@@ -13,6 +13,11 @@ namespace MaxExporter
         {
             return ((classA.PartA == a) && (classA.PartB == b));
         }
+
+        public static fRGBA TofRGBA(this IAColor color)
+        {
+            return new fRGBA(color.R, color.G, color.B, color.A);
+        }
     }
 
     public static class LinqExtensions
@@ -197,7 +202,35 @@ namespace MaxExporter
                 return ParamBlock.SetValue(Id, 0, value, TableId);
             }
 
-            public MapInformation GetValueAsMap()
+            public fRGBA GetColour()
+            {
+                return ParamBlock.GetAColor(Id, 0, TableId).TofRGBA();
+            }
+
+            public string GetString()
+            {
+                return ParamBlock.GetStr(Id, 0, TableId);
+            }
+
+            public float GetFloat() //can also return integer types
+            {
+                switch (Type)
+                {
+                    case ParamType2.Int:
+                    case ParamType2.Int64:
+                    case ParamType2.Int64Tab:
+                        return ParamBlock.GetInt(Id, 0, TableId);
+                    default:
+                        return ParamBlock.GetFloat(Id, 0, TableId);
+                }
+            }
+
+            public bool GetBool()
+            {
+                return (ParamBlock.GetInt(Id, 0, TableId) > 0);
+            }
+
+            public MapInformation GetMap()
             {
                 MapInformation map = new MapInformation();
 
@@ -205,7 +238,7 @@ namespace MaxExporter
                 {
                     case ParamType2.Texmap:
                     case ParamType2.TexmapTab:
-                         ITexmap t = ParamBlock.GetTexmap(Id, 0, TableId);
+                        ITexmap t = ParamBlock.GetTexmap(Id, 0, TableId);
                         if (t == null)
                         {
                             return null;
@@ -243,68 +276,52 @@ namespace MaxExporter
                 return map;
             }
 
-            public string GetValueAsString()
+            public object GetValue()
             {
-                switch(Type)
+                switch (Type)
                 {
                     case ParamType2.Bool:
                     case ParamType2.Bool2:
                     case ParamType2.BoolTab:
                     case ParamType2.BoolTab2:
-                        return (ParamBlock.GetInt(Id, 0, TableId) > 0).ToString();
+                        return GetBool();
 
+                    case ParamType2.Frgba:
                     case ParamType2.Rgba:
                         IAColor c = ParamBlock.GetAColor(Id, 0, TableId);
-                        return string.Format("{0} {1} {2} {3}", c.R, c.G, c.B, c.A);
+                        return GetColour();
 
                     case ParamType2.PcntFrac:
                     case ParamType2.PcntFracTab:
                     case ParamType2.Float:
                     case ParamType2.FloatTab:
-                        return ParamBlock.GetFloat(Id, 0, TableId).ToString();
-
                     case ParamType2.Int:
                     case ParamType2.Int64:
                     case ParamType2.IntTab:
-                        return ParamBlock.GetInt(Id, 0, TableId).ToString();
+                        return GetFloat();
 
                     case ParamType2.Bitmap:
                     case ParamType2.BitmapTab:
-                        IPBBitmap b = ParamBlock.GetBitmap(Id, 0, TableId);
-                        if (b == null)
-                        {
-                            return null;
-                        }
-                        return b.Bi.Filename;
-
                     case ParamType2.Texmap:
                     case ParamType2.TexmapTab:
-                        ITexmap t = ParamBlock.GetTexmap(Id, 0, TableId);
-                        if (t == null)
-                        {
-                            return null;
-                        }
-                        if (t is IBitmapTex)
-                        {
-                            Log.Add("Encountered bitmap but dont process these yet");
-                            return null;
-                        }
-
-                        Log.Add("We dont render procedurals yet.");
-
-                        return null;
+                        return GetMap();
 
                     case ParamType2.Filename:
                     case ParamType2.FilenameTab:
                     case ParamType2.String:
                     case ParamType2.StringTab:
-                        return ParamBlock.GetStr(Id, 0, TableId);
+                        return GetString();
 
                     default:
                         //throw new Exception("Don't know type for ParamType2: " + Type.ToString());
-                        Log.Add("Cannot convert ParamType2: " + Type.ToString() + " to String");
+                        Log.Add("Don't know how to get ParamType2: " + Type.ToString());
                         return null;
                 }
+            }
+
+            public string GetValueAsString()
+            {
+                return GetValue().ToString();
             }           
         }
 
