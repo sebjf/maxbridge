@@ -47,6 +47,20 @@ namespace MaxExporter
                 CopyMemory((IntPtr)vertexData, maxMesh.GetVertPtr(0).Handle,(uint)(sizeof(Point3) * maxMesh.NumVerts));
             }
 
+            for (int i = 0; i < maxMesh.NumMaps; i++ )
+            {
+                int count = maxMesh.GetNumMapVerts(i);
+                if (count > 0)
+                {
+                    Point3[] data = new Point3[count];
+                    fixed (Point3* dataptr = data)
+                    {
+                        CopyMemory((IntPtr)dataptr, maxMesh.MapVerts(i)[0].Handle, (uint)(sizeof(Point3) * count));
+                    }
+                    update.TextureCoordinates.Add(data);
+                }
+            }
+
             update.Faces = new Face[maxMesh.NumFaces];
 
             fixed (Face* faceData = update.Faces)

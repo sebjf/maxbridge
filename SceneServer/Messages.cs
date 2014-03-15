@@ -123,6 +123,11 @@ namespace Messages
         public Point3[] Vertices;
         public Face[] Faces;
 
+        public SimplifiedNormal[] Normals;
+
+        public TVFace[] TextureFaces;
+        public List<Point3[]> TextureCoordinates = new List<Point3[]>();
+
         public List<MaterialInformation> Materials = new List<MaterialInformation>();
     }
 
