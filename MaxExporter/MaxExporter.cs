@@ -16,11 +16,11 @@ namespace MaxExporter
 {
     public partial class MaxUnityExporter
     {
-        protected IGlobal globalInterface;
+        protected IGlobal gi;
 
         public MaxUnityExporter(IGlobal global)
         {
-            this.globalInterface = global;
+            this.gi = global;
         }
 
         SimpleStreamServer pipe;

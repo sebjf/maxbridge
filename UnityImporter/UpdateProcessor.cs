@@ -16,27 +16,23 @@ namespace MaxUnityBridge
 
     public class UpdateProcessor : MonoBehaviour, IUpdateProcessor
     {
+        protected bool SwapZY = true;
+
         public void ProcessUpdate(GeometryUpdate Update)
         {
             GameObject node = GetCreateObject(Update);
 
             SetTransform(node, Update.Transform);
 
-            //http://docs.unity3d.com/Documentation/ScriptReference/MeshFilter.html
-            //https://docs.unity3d.com/Documentation/ScriptReference/MeshFilter.html
 
             MeshFilter meshFilter = node.GetComponent<MeshFilter>();
-
             if(meshFilter == null)
             {
                 meshFilter = node.AddComponent<MeshFilter>();
             }
             
-            //http://docs.unity3d.com/Documentation/Components/class-MeshRenderer.html
-            //https://docs.unity3d.com/Documentation/ScriptReference/MeshRenderer.html
 
             MeshRenderer meshRenderer = node.GetComponent<MeshRenderer>();
-
             if(meshRenderer == null)
             {
                 meshRenderer = node.AddComponent<MeshRenderer>();
@@ -47,41 +43,46 @@ namespace MaxUnityBridge
                 meshFilter.mesh = new Mesh();
             }
 
+
             var materialsMap = UpdateMesh(meshFilter.sharedMesh, Update);
 
             Material[] materials = new Material[meshFilter.sharedMesh.subMeshCount];
+
+            Dictionary<int, MaterialInformation> materialinfo = new Dictionary<int, MaterialInformation>();
+            for (int i = 0; i < Update.Materials.Count; i++)
+            {
+                materialinfo.Add(i, Update.Materials[i]);
+            }
+
             foreach (var p in materialsMap)
             {
-                materials[p.Key] = ImportMaterial(Update.Materials[0]);
+                Material m = null;
+                if (Update.Materials.Count > 0)
+                {
+                    m = ImportMaterial(Update.Materials[0]);
+                }
+
+                if (Update.Materials.Count > p.Key)
+                {
+                    materials[p.Key] = ImportMaterial(Update.Materials[p.Key]);
+                }
+                else
+                {
+                    materials[p.Key] = m;
+                }
             }
 
             meshRenderer.materials = materials;
        
         }
 
-        protected void SetTransform(GameObject node, TransformComponents components)
+        protected void SetTransform(GameObject node, TRS components)
         {
-            node.transform.localPosition = Vector3.zero;
-            node.transform.localRotation = Quaternion.identity;
-            node.transform.localScale = Vector3.one;
-
-            Quaternion scaleRotation = new Quaternion(components.ScaleRotation.x, components.ScaleRotation.y, components.ScaleRotation.z, components.ScaleRotation.w);
-            
-            if (scaleRotation != Quaternion.identity)
-            {
-                Debug.Log("Nonidentity scale rotation from Max. Consider applying Reset XForm modifier and re-importing.");
-            }
-
-            Quaternion Rotation = new Quaternion(components.Rotation.x, components.Rotation.y, components.Rotation.z, components.Rotation.w);
-            Vector3 angles = Quaternion.ToEulerAngles(Rotation);
-            Rotation = Quaternion.EulerAngles(angles.x, angles.z, angles.y);
-            
-            Vector3 Scale = new Vector3(components.Scale.x, components.Scale.z, components.Scale.y);
-            Vector3 Translation = new Vector3(components.Translate.x, components.Translate.z, components.Translate.y);
-
-            node.transform.localRotation = Rotation;
-            node.transform.localScale = Scale;
-            node.transform.localPosition = Translation;
+#pragma warning disable 0618 //Max passes angles in radians, so this *is* the one we want 
+            node.transform.localRotation = Quaternion.EulerAngles(-ToVector3(components.EulerRotation));
+#pragma warning restore 0618
+            node.transform.localScale = ToVector3(components.Scale);
+            node.transform.localPosition = ToVector3(components.Translate);
 
         }
 
@@ -110,45 +111,29 @@ namespace MaxUnityBridge
 
             for (int i = 0; i < Update.Vertices.Length; i++)
             {
-                //vertices[i] = new Vector3(Update.Vertices[i].x, Update.Vertices[i].y, Update.Vertices[i].z);
-                vertices[i] = new Vector3(Update.Vertices[i].x, Update.Vertices[i].z, Update.Vertices[i].y);
+                vertices[i] = ToVector3(Update.Vertices[i]);
             }
 
             mesh.vertices = vertices; //the array must be populated and then assigned to mesh (it probably copies it in its set accessor..)
 
-            if (Update.TextureCoordinates.Count > 0)
+
+            foreach (MapChannel ch in Update.Channels)
             {
-                if(Update.TextureCoordinates[0].Length != Update.Vertices.Length){
-                    throw new Exception("Mesh must have the same number of texcoordinates as vertices.");
-                }
-
-                var uvs = new Vector2[Update.TextureCoordinates[0].Length];
-                for(int i = 0; i < Update.TextureCoordinates[0].Length; i++)
+                if (ch.Id < 0)
                 {
-                    uvs[i] = new Vector2(Update.TextureCoordinates[0][i].x, Update.TextureCoordinates[0][i].y);
+                    continue;
                 }
 
-                mesh.uv = uvs;
-                mesh.uv2 = uvs;
+                //var uvs = new Vector2[Update.TextureCoordinates[0].Length];
+                //for(int i = 0; i < Update.TextureCoordinates[0].Length; i++)
+                //{
+                //    uvs[i] = new Vector2(Update.TextureCoordinates[0][i].x, Update.TextureCoordinates[0][i].y);
+                //}
+
+                //mesh.uv = uvs;
+                //mesh.uv2 = uvs;
             }
-            
-            /* If there are two UV channels, copy the second one into the second uv set. If there are more, ignore them. If there are less, uv2 will be populated with duplicates from above anyway */
 
-            if (Update.TextureCoordinates.Count > 1)
-            {
-                if (Update.TextureCoordinates[1].Length != Update.Vertices.Length)
-                {
-                    throw new Exception("Mesh must have the same number of texcoordinates as vertices.");
-                }
-
-                var uvs = new Vector2[Update.TextureCoordinates[1].Length];
-                for (int i = 0; i < Update.TextureCoordinates[1].Length; i++)
-                {
-                    uvs[i] = new Vector2(Update.TextureCoordinates[1][i].x, Update.TextureCoordinates[1][i].y);
-                }
-
-                mesh.uv2 = uvs;
-            }
 
             Dictionary<short, List<int>> faceLists = new Dictionary<short, List<int>>();
 
@@ -181,7 +166,7 @@ namespace MaxUnityBridge
 
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
-            TangentSolver.Solve(mesh);
+     //       TangentSolver.Solve(mesh);
 
             return materialsMap;
         }
@@ -278,6 +263,18 @@ namespace MaxUnityBridge
                 }
 
                 return material;
+            }
+        }
+
+        public Vector3 ToVector3(Point3 p)
+        {
+            if (SwapZY)
+            {
+                return new Vector3() { x = p.x, y = p.z, z = p.y };
+            }
+            else
+            {
+                return new Vector3() { x = p.x, y = p.y, z = p.z };
             }
         }
     }

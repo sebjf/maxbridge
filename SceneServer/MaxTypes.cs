@@ -5,7 +5,6 @@ using System.Text;
 
 namespace Messages
 {
-
     /* The Quaternion class defined by Max. Note that in the Max SDK [x,y,z] is the axis of rotation and w is the angle. Rotation convention is left hand for the API. */
     
     [Serializable]
@@ -60,15 +59,5 @@ namespace Messages
         public UInt32 smGroup;
         public UInt32 flags;
 
-    }
-
-
-    /* This is not a Max type, this is how we store the normals. It is the one time we pre-process on Max's side, because it is more efficient to reformat the normal database during traversal due to its complexity */
-    public unsafe struct SimplifiedNormal
-    {
-        public int vertex;
-        public float x;
-        public float y;
-        public float z;
     }
 }

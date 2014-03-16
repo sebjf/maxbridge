@@ -104,12 +104,19 @@ namespace Messages
     }
 
     [Serializable]
-    public struct TransformComponents
+    public struct TRS
     {
         public Point3 Translate;
-        public Quat Rotation;
-        public Quat ScaleRotation;
         public Point3 Scale;
+        public Point3 EulerRotation;
+    }
+
+    [Serializable]
+    public class MapChannel
+    {
+        public int Id;
+        public Point3[] Coordinates;
+        public TVFace[] Faces;
     }
 
     [Serializable]
@@ -118,16 +125,15 @@ namespace Messages
         public string Name;
         public string Parent;
 
-        public TransformComponents Transform;
+        public TRS Transform;
 
         public Point3[] Vertices;
         public Face[] Faces;
 
-        public SimplifiedNormal[] Normals;
+        public Point3[] Normals;
 
-        public TVFace[] TextureFaces;
-        public List<Point3[]> TextureCoordinates = new List<Point3[]>();
-
+        public List<MapChannel> Channels = new List<MapChannel>();
+        
         public List<MaterialInformation> Materials = new List<MaterialInformation>();
     }
 
