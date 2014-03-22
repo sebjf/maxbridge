@@ -136,11 +136,24 @@ namespace MaxUnityBridge
         {
             List<Triplet> triplets = new List<Triplet>();
 
-            foreach (var i in faces.FaceIndices)
+            if (ChangeCoordinateSystem)
             {
-                triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = tn[i].i1, y = yn[i].i1 });
-                triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = tn[i].i2, y = yn[i].i2 });
-                triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = tn[i].i3, y = yn[i].i3 });       
+
+                foreach (var i in faces.FaceIndices)
+                {   
+                    triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = tn[i].i3, y = yn[i].i3 });
+                    triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = tn[i].i2, y = yn[i].i2 });
+                    triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = tn[i].i1, y = yn[i].i1 });
+                }
+            }
+            else
+            {
+                foreach (var i in faces.FaceIndices)
+                {
+                    triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = tn[i].i1, y = yn[i].i1 });
+                    triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = tn[i].i2, y = yn[i].i2 });
+                    triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = tn[i].i3, y = yn[i].i3 });    
+                }
             }
 
             return new FaceTripletGroup { MaterialId = faces.MaterialId, Triplets = triplets.ToArray() };

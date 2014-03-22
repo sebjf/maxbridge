@@ -17,14 +17,15 @@ namespace MaxUnityBridge
     public partial class UpdateProcessor : MonoBehaviour, IUpdateProcessor
     {
         //Unity is a left handed Y up coordinate system, whereas Max is a right handed Z up coordinate system.
-        //To convert points between the two we must swap Z & Y, then mirror (invert) along the X and Z (unity) axis
-        protected bool SwapZY = true;
+        //To convert points between the two we must swap Z & Y, then mirror (invert) along the X and Z (unity) axis.
+        //(Remember to swap the winding order as well)
+        protected bool ChangeCoordinateSystem = true;
 
         public void ProcessUpdate(GeometryUpdate Update)
         {
             GameObject node = GetCreateObject(Update);
 
-         //   SetTransform(node, Update.Transform);
+            SetTransform(node, Update.Transform);
 
 
             MeshFilter meshFilter = node.GetComponent<MeshFilter>();
@@ -57,13 +58,8 @@ namespace MaxUnityBridge
 
         protected void SetTransform(GameObject node, TRS components)
         {
-            float r_multiplier = 1.0f;
-            if (SwapZY)
-            {
-                r_multiplier *= -1.0f;
-            }
 #pragma warning disable 0618 //Max passes angles in radians, so this *is* the one we want 
-            node.transform.localRotation = Quaternion.EulerAngles(ToVector3(components.EulerRotation));
+            node.transform.localRotation = Quaternion.EulerAngles(-ToVector3(components.EulerRotation));
 #pragma warning restore 0618
             node.transform.localScale = ToVector3S(components.Scale);
             node.transform.localPosition = ToVector3(components.Translate);
@@ -233,9 +229,9 @@ namespace MaxUnityBridge
 
         public Vector3 ToVector3(Point3 p)
         {
-            if (SwapZY)
+            if (ChangeCoordinateSystem)
             {
-                return new Vector3() { x = -p.x, y = p.z, z = p.y };
+                return new Vector3() { x = -p.x, y = p.z, z = -p.y };
             }
             else
             {
@@ -245,7 +241,15 @@ namespace MaxUnityBridge
 
         public Vector3 ToVector3S(Point3 p)
         {
-            return new Vector3() { x = p.x, y = p.y, z = p.z };
+            if (ChangeCoordinateSystem)
+            {
+                return new Vector3() { x = p.x, y = p.z, z = p.y };
+            }
+            else
+            {
+                return new Vector3() { x = p.x, y = p.y, z = p.z };
+            }
+
         }
 
         public Vector2 ToVector2(Point3 p)
