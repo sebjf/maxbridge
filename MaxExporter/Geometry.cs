@@ -107,25 +107,6 @@ namespace MaxExporter
                 }
             }
 
-
-            //for (int i = 0; i < mesh.NumMaps; i++ )
-            //{
-            //    int count = mesh.GetNumMapVerts(i);
-            //    if (count > 0)
-            //    {
-            //        MapChannel channel = new MapChannel();
-            //        channel.Id = i;
-
-            //        channel.Coordinates = new Point3[count];
-            //        fixed (Point3* dataptr = channel.Coordinates)
-            //        {
-            //            CopyMemory((IntPtr)dataptr, mesh.MapVerts(i)[0].Handle, (uint)(sizeof(Point3) * count));
-            //        }
-
-            //        update.Channels.Add(channel);
-            //    }
-            //}
-
             
             /* The MeshNormalSpec class is intended to store user specified normals. We can use it however to have max calculate the normals in the typical way and provide access to them in an easy way. */
 
@@ -147,18 +128,17 @@ namespace MaxExporter
 
             int numnormalfaces = normalspec.NumFaces;
 
+            update.NormalFaces = new Indices3[numnormalfaces];
             for (int i = 0; i < numnormalfaces; i++)
             {
                 IMeshNormalFace f = normalspec.Face(i);
-
-                
+                update.NormalFaces[i] = *(Indices3*)f.NormalIDArray;
             }
 
             if (!normalsAlreadySpecified)
             {
                 mesh.ClearSpecifiedNormals();
             }
-
 
 
 
@@ -169,15 +149,9 @@ namespace MaxExporter
                 CopyMemory((IntPtr)faceData, mesh.Faces[0].Handle, (uint)(sizeof(Face) * mesh.NumFaces));
             }
 
-            //update.TextureFaces = new TVFace[mesh.NumFaces];
 
-            //fixed (TVFace* faceData = update.TextureFaces)
-            //{
-            //    CopyMemory((IntPtr)faceData, mesh.TvFace[0].Handle, (uint)(sizeof(TVFace) * mesh.NumFaces));
-            //}
 
             update.Materials.AddRange(GetNodeMaterials(node.Mtl));
-
 
 
 

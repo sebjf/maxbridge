@@ -131,6 +131,7 @@ namespace Messages
         public Face[] Faces;
 
         public Point3[] Normals;
+        public Indices3[] NormalFaces;
 
         public List<MapChannel> Channels = new List<MapChannel>();
         

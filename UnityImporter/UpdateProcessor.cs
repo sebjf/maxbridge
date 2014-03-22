@@ -14,15 +14,17 @@ namespace MaxUnityBridge
         void ProcessUpdate(GeometryUpdate Update);
     }
 
-    public class UpdateProcessor : MonoBehaviour, IUpdateProcessor
+    public partial class UpdateProcessor : MonoBehaviour, IUpdateProcessor
     {
+        //Unity is a left handed Y up coordinate system, whereas Max is a right handed Z up coordinate system.
+        //To convert points between the two we must swap Z & Y, then mirror (invert) along the X and Z (unity) axis
         protected bool SwapZY = true;
 
         public void ProcessUpdate(GeometryUpdate Update)
         {
             GameObject node = GetCreateObject(Update);
 
-            SetTransform(node, Update.Transform);
+         //   SetTransform(node, Update.Transform);
 
 
             MeshFilter meshFilter = node.GetComponent<MeshFilter>();
@@ -44,44 +46,26 @@ namespace MaxUnityBridge
             }
 
 
-            var materialsMap = UpdateMesh(meshFilter.sharedMesh, Update);
+            ProcessedMesh meshsource = PreprocessMesh(Update);
 
-            Material[] materials = new Material[meshFilter.sharedMesh.subMeshCount];
+            SetMesh(meshFilter.sharedMesh, meshsource);
 
-            Dictionary<int, MaterialInformation> materialinfo = new Dictionary<int, MaterialInformation>();
-            for (int i = 0; i < Update.Materials.Count; i++)
-            {
-                materialinfo.Add(i, Update.Materials[i]);
-            }
 
-            foreach (var p in materialsMap)
-            {
-                Material m = null;
-                if (Update.Materials.Count > 0)
-                {
-                    m = ImportMaterial(Update.Materials[0]);
-                }
-
-                if (Update.Materials.Count > p.Key)
-                {
-                    materials[p.Key] = ImportMaterial(Update.Materials[p.Key]);
-                }
-                else
-                {
-                    materials[p.Key] = m;
-                }
-            }
-
-            meshRenderer.materials = materials;
+            SetMaterials(meshRenderer, meshsource, Update);
        
         }
 
         protected void SetTransform(GameObject node, TRS components)
         {
+            float r_multiplier = 1.0f;
+            if (SwapZY)
+            {
+                r_multiplier *= -1.0f;
+            }
 #pragma warning disable 0618 //Max passes angles in radians, so this *is* the one we want 
-            node.transform.localRotation = Quaternion.EulerAngles(-ToVector3(components.EulerRotation));
+            node.transform.localRotation = Quaternion.EulerAngles(ToVector3(components.EulerRotation));
 #pragma warning restore 0618
-            node.transform.localScale = ToVector3(components.Scale);
+            node.transform.localScale = ToVector3S(components.Scale);
             node.transform.localPosition = ToVector3(components.Translate);
 
         }
@@ -103,72 +87,53 @@ namespace MaxUnityBridge
             return node;
         }
 
-        unsafe protected Dictionary<int,int> UpdateMesh(Mesh mesh, GeometryUpdate Update)
+        protected void SetMaterials(MeshRenderer renderer, ProcessedMesh meshsrc, GeometryUpdate update)
         {
-            //http://docs.unity3d.com/Documentation/ScriptReference/Mesh.html
-
-            var vertices = new Vector3[Update.Vertices.Length];
-
-            for (int i = 0; i < Update.Vertices.Length; i++)
+            Dictionary<int, MaterialInformation> materialinfo = new Dictionary<int, MaterialInformation>();
+            for (int i = 0; i < update.Materials.Count; i++)
             {
-                vertices[i] = ToVector3(Update.Vertices[i]);
+                materialinfo.Add(i, update.Materials[i]);
             }
 
-            mesh.vertices = vertices; //the array must be populated and then assigned to mesh (it probably copies it in its set accessor..)
+            Material[] materials = new Material[meshsrc.faces.Count];
 
-
-            foreach (MapChannel ch in Update.Channels)
+            for (int i = 0; i < meshsrc.faces.Count; i++)
             {
-                if (ch.Id < 0)
+                Material m = null;
+                if (update.Materials.Count > 0)
                 {
-                    continue;
+                    m = ImportMaterial(update.Materials[0]);
                 }
 
-                //var uvs = new Vector2[Update.TextureCoordinates[0].Length];
-                //for(int i = 0; i < Update.TextureCoordinates[0].Length; i++)
-                //{
-                //    uvs[i] = new Vector2(Update.TextureCoordinates[0][i].x, Update.TextureCoordinates[0][i].y);
-                //}
-
-                //mesh.uv = uvs;
-                //mesh.uv2 = uvs;
-            }
-
-
-            Dictionary<short, List<int>> faceLists = new Dictionary<short, List<int>>();
-
-            var triangles = new int[Update.Faces.Length * 3];
-
-            for (int i = 0; i < Update.Faces.Length; i++ )
-            {
-                short materialid = (short)((Update.Faces[i].flags & 0xFFFF0000) >> 16); //in Max the high word of the flags member contains the material id.
-
-                if (!faceLists.ContainsKey(materialid))
+                if (update.Materials.Count > meshsrc.faces[i].MaterialId)
                 {
-                    faceLists.Add(materialid, new List<int>());
+                    materials[i] = ImportMaterial(update.Materials[meshsrc.faces[i].MaterialId]);
                 }
-
-                faceLists[materialid].Add((int)Update.Faces[i].v.v1);
-                faceLists[materialid].Add((int)Update.Faces[i].v.v2);
-                faceLists[materialid].Add((int)Update.Faces[i].v.v3);
+                else
+                {
+                    materials[i] = m;
+                }
             }
 
-            Dictionary<int, int> materialsMap = new Dictionary<int, int>();
+            renderer.materials = materials;
+        }
 
-            mesh.subMeshCount = faceLists.Values.Count;
 
-            for (int i = 0; i < faceLists.Values.Count; i++)
+        protected void SetMesh(Mesh mesh, ProcessedMesh meshsrc)
+        {
+            mesh.vertices = meshsrc.components.vertices;
+            mesh.normals = meshsrc.components.normals;
+            mesh.uv1 = meshsrc.components.uvs;
+            mesh.uv2 = meshsrc.components.uvs2;
+
+            mesh.subMeshCount = meshsrc.faces.Count;
+
+            for (int i = 0; i < meshsrc.faces.Count; i++)
             {
-                mesh.SetTriangles(faceLists.Values.ElementAt(i).ToArray(), i);
-
-                materialsMap.Add(i, faceLists.Keys.ElementAt(i));
+                mesh.SetTriangles(meshsrc.faces[i].FaceIndices, i);
             }
 
-            mesh.RecalculateNormals();
             mesh.RecalculateBounds();
-     //       TangentSolver.Solve(mesh);
-
-            return materialsMap;
         }
 
         protected Material ImportMaterial(MaterialInformation m)
@@ -270,102 +235,22 @@ namespace MaxUnityBridge
         {
             if (SwapZY)
             {
-                return new Vector3() { x = p.x, y = p.z, z = p.y };
+                return new Vector3() { x = -p.x, y = p.z, z = p.y };
             }
             else
             {
                 return new Vector3() { x = p.x, y = p.y, z = p.z };
             }
         }
-    }
 
-    /* 
-     * Posted by noontz at
-     * http://forum.unity3d.com/threads/38984-How-to-Calculate-Mesh-Tangents/ 
-     */
-
-    public class TangentSolver 
-    {
-        /*
-        Derived from
-        Lengyel, Eric. "Computing Tangent Space Basis Vectors for an Arbitrary Mesh". Terathon Software 3D Graphics Library, 2001.
-        [url]http://www.terathon.com/code/tangent.html[/url]
-        */
-
-        public static void Solve(Mesh theMesh) 
+        public Vector3 ToVector3S(Point3 p)
         {
-            int vertexCount = theMesh.vertexCount;
-            Vector3[] vertices = theMesh.vertices;
-            Vector3[] normals = theMesh.normals;
-            Vector2[] texcoords = theMesh.uv;
-            int[] triangles = theMesh.triangles;
-            int triangleCount = triangles.Length/3;
+            return new Vector3() { x = p.x, y = p.y, z = p.z };
+        }
 
-            Vector4[] tangents = new Vector4[vertexCount];
-            Vector3[] tan1 = new Vector3[vertexCount];
-            Vector3[] tan2 = new Vector3[vertexCount];
-
-            int tri = 0;
-
-            for (int i = 0; i < (triangleCount); i++) {
-
-                int i1 = triangles[tri];
-                int i2 = triangles[tri+1];
-                int i3 = triangles[tri+2];
-
-                Vector3 v1 = vertices[i1];
-                Vector3 v2 = vertices[i2];
-                Vector3 v3 = vertices[i3];
-
-                Vector2 w1 = texcoords[i1];
-                Vector2 w2 = texcoords[i2];
-                Vector2 w3 = texcoords[i3];
-
-                float x1 = v2.x - v1.x;
-                float x2 = v3.x - v1.x;
-                float y1 = v2.y - v1.y;
-                float y2 = v3.y - v1.y;
-                float z1 = v2.z - v1.z;
-                float z2 = v3.z - v1.z;
-
-                float s1 = w2.x - w1.x;
-                float s2 = w3.x - w1.x;
-                float t1 = w2.y - w1.y;
-                float t2 = w3.y - w1.y;
-
-                float r = 1.0f / (s1 * t2 - s2 * t1);
-                Vector3 sdir = new Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
-                Vector3 tdir = new Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
-
-                tan1[i1] += sdir;
-                tan1[i2] += sdir;
-                tan1[i3] += sdir;
-
-                tan2[i1] += tdir;
-                tan2[i2] += tdir;
-                tan2[i3] += tdir;
-
-                tri += 3;
-
-            }
-
-            for (int i = 0; i < (vertexCount); i++) 
-            {
-                Vector3 n = normals[i];
-                Vector3 t = tan1[i];
-
-                // Gram-Schmidt orthogonalize
-                Vector3.OrthoNormalize(ref n, ref t);
-
-                tangents[i].x  = t.x;
-                tangents[i].y  = t.y;
-                tangents[i].z  = t.z;
-
-                // Calculate handedness
-                tangents[i].w = ( Vector3.Dot(Vector3.Cross(n, t), tan2[i]) < 0.0f ) ? -1.0f : 1.0f;
-
-            }       
-            theMesh.tangents = tangents;
+        public Vector2 ToVector2(Point3 p)
+        {
+            return new Vector3() { x = p.x, y = p.y };
         }
     }
 }
