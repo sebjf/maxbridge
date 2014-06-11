@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO.Pipes;
-using AsyncPipes;
-using Messages;
 using System.Net.Sockets;
 using System.Net;
+using Messaging;
 
 namespace UnityTest
 {
@@ -65,39 +64,5 @@ namespace UnityTest
             } while (true);
         }
 
-        static void Test1()
-        {
-            NamedPipeServerStream stream = new NamedPipeServerStream("MaxUnityBridge");
-            stream.WaitForConnection();
-
-            do
-            {
-                byte[] dataLength = new byte[4];
-                stream.Read(dataLength, 0, 4);
-                int messageLength = BitConverter.ToInt32(dataLength, 0);
-                byte[] data = new byte[messageLength];
-                stream.Read(data, 0, messageLength);
-
-                UnityMessage message = MessageSerializers.DeserializeMessage<UnityMessage>(data);
-
-                switch (message.MessageType)
-                {
-                    case MessageTypes.RequestGeometry:
-
-                        UnityMessage reply = new MessageGeometryUpdateStream(null);
-                        byte[] replyData = MessageSerializers.SerializeMessage(reply);
-                        stream.Write(BitConverter.GetBytes(replyData.Length), 0, 4);
-                        stream.Write(replyData, 0, replyData.Length);
-                        stream.Flush();
-                        stream.WaitForPipeDrain();
-
-                        break;
-                    default:
-
-                        break;
-                }
-
-            } while (true);
-        }
     }
 }

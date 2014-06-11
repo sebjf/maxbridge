@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityImporter", "UnityImporter\UnityImporter.csproj", "{2DE61702-B8C0-4CC5-8D27-7D7500E875CE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxExporter", "MaxExporter\MaxExporter.csproj", "{948F046D-4F9B-4AC4-814D-16DEC6177210}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxSceneServer", "MaxSceneServer\MaxSceneServer.csproj", "{948F046D-4F9B-4AC4-814D-16DEC6177210}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "SceneServer\Messaging.csproj", "{6EC1A1AC-0ACE-41C4-B466-44E6307B6D82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "Messaging\Messaging.csproj", "{6EC1A1AC-0ACE-41C4-B466-44E6307B6D82}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityTest", "UnityTest\UnityTest.csproj", "{4E79B614-0677-46E5-BC0A-DA0027553908}"
 EndProject
