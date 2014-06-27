@@ -10,52 +10,54 @@ namespace MaxSceneServer
 {
     public partial class MaxSceneServer
     {
-        IEnumerable<MaterialInformation> GetNodeMaterials(IMtl material)
+
+        IEnumerable<MaterialInformation> GetMaterials(MessageMaterialRequest request)
+        {
+            foreach (var node in GetNode(request.m_nodeName))
+            {
+                yield return GetMaterialProperties(node.Mtl, request);
+            }           
+        }
+
+        MaterialInformation GetMaterialProperties(IMtl material, MessageMaterialRequest request)
         {
             if (material == null)
             {
-                yield break;
+                return null;
             }
 
-            if (material.ClassID.EqualsClassID(597,0))
+            if (request.m_materialIndex < 0)
             {
-                foreach (var m in GetNodeMaterials(material.GetSubMtl(2)))      //when there is a shell material always return the baked one.
-                {
-                    yield return m;
-                }
-                yield break;
+                return GetMaterialProperties(material);
             }
 
-            if (material.ClassID.EqualsClassID(512, 0))
-            {
-                for (int i = 0; i < material.NumSubMtls; i++)                   //process all submaterials in a submtl object
-                {
-                    foreach (var m in GetNodeMaterials(material.GetSubMtl(i))) 
-                    {
-                        yield return m;
-                    }
-                }
-                yield break;
-            }
-
-            yield return GetMaterialProperties(material);
+            return GetMaterialProperties(material.GetSubMtl(request.m_materialIndex));
         }
 
         MaterialInformation GetMaterialProperties(IMtl material)
         {
             MaterialInformation m = new MaterialInformation();
-            m.Class = material.ClassName;
+            m.m_className = material.ClassName;
 
             foreach (var p in EnumerateProperties(material))
             {
-                m.MaterialProperties.Add(p.Name, p.GetValue());
-                if (p.InternalName != null)
+                m.MaterialProperties.Add(p.m_parameterName, p.GetValue());
+                if (p.m_internalName != null)
                 {
-                    m.MaterialProperties.Add(p.InternalName, p.GetValue());
+                    m.MaterialProperties.Add(p.m_internalName, p.GetValue());
                 }
             }
 
             return m;
+        }
+
+        MapReference GetMap(MapReference map)
+        {
+            Parameter mapParam = new Parameter(map.m_parameterReference);
+
+
+
+            return new MapReference();
         }
 
     }

@@ -8,9 +8,14 @@ namespace MaxSceneServer
 {
     public partial class MaxSceneServer
     {
-        public IEnumerable<IINode> GetGeometryNode(string Name)
+        public IEnumerable<IINode> GetNode(string name)
         {
-            return (TriGeometryNodes.Where(n => (n.Name == Name)));
+            return SceneNodes.Where(n => (n.Name == name));
+        }
+
+        public IEnumerable<IINode> GetGeometryNode(string name)
+        {
+            return (TriGeometryNodes.Where(n => (n.Name == name)));
         }
 
         public IEnumerable<IINode> TriGeometryNodes

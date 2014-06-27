@@ -56,7 +56,7 @@ namespace MaxSceneServer
 
         public override object Create(bool loading)
         {
-            return new MaxExporterUtility();
+            return new MaxSceneServerUtility();
         }
 
         public override bool IsPublic
@@ -71,9 +71,9 @@ namespace MaxSceneServer
         }
     }
 
-    public class MaxExporterUtility : Autodesk.Max.Plugins.GUP
+    public class MaxSceneServerUtility : Autodesk.Max.Plugins.GUP
     {
-        public MaxExporterUtility()
+        public MaxSceneServerUtility()
         {
             global = Autodesk.Max.GlobalInterface.Instance;
             Log.logger = global.COREInterface.Log;
@@ -81,7 +81,7 @@ namespace MaxSceneServer
         }
 
         protected IGlobal global;
-        protected MaxSceneServer plugin;
+        protected MaxSceneServerFactory plugin;
 
         public override void Dispose()
         {
@@ -109,7 +109,7 @@ namespace MaxSceneServer
         protected void beginUnityServer()
         {
             Log.Add("[m] Starting MaxUnityBridge Server.");
-            plugin = new MaxSceneServer(global);
+            plugin = new MaxSceneServerFactory();
             plugin.StartServer();
         }
     }

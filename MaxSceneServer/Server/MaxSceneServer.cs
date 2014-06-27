@@ -37,6 +37,12 @@ namespace MaxSceneServer
                 return;
             }
 
+            if (message is MessageMaterialRequest)
+            {
+                _pipe.SendMessage(new MessageMaterials(GetMaterials(message as MessageMaterialRequest)));
+                return;
+            }
+
             var error = "Recieved unsupported message type: " + message.GetType().Name;
             Log.Add(error);
             SendError(error);

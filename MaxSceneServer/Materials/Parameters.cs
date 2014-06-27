@@ -114,7 +114,7 @@ namespace MaxSceneServer
 
         public IEnumerable<Parameter> EnumerateProperties(IReferenceMaker obj)
         {
-            return EnumerateReferences(obj).DistinctBy(p => p.Name);
+            return EnumerateReferences(obj).DistinctBy(p => p.m_parameterName);
         }
 
         #endregion
@@ -123,42 +123,55 @@ namespace MaxSceneServer
 
         public class Parameter
         {
-            public IIParamBlock2 ParamBlock;
+            public IIParamBlock2 m_containingBlock;
 
-            public string Name;
-            public string InternalName;
+            public string m_parameterName;
+            public string m_internalName;
 
-            public short Id;
-            public int TableId;
-            public ParamType2 Type;
+            public short m_Id;
+            public int m_TableId;
+            public ParamType2 m_Type;
+
+            public Parameter(ParameterReference portableReference)
+            {
+                IAnimatable anim = Autodesk.Max.GlobalInterface.Instance.Animatable.GetAnimByHandle(portableReference.m_ownerAnimHandle);
+
+                m_containingBlock = anim.GetParamBlockByID(portableReference.m_paramBlockId);
+                m_Id = portableReference.m_paramId;
+                m_TableId = portableReference.m_tableId;
+
+                m_parameterName = m_containingBlock.GetLocalName(m_Id, m_TableId);
+                m_internalName = m_containingBlock.GetParamDef(m_Id).IntName;
+                m_Type = m_containingBlock.GetParameterType(m_Id);
+            }
 
             public Parameter(IIParamBlock2 blck, short idx, int tabid)
             {
-                this.ParamBlock = blck;
-                this.Name = blck.GetLocalName(idx, tabid);
-                this.InternalName = blck.GetParamDef(idx).IntName;
+                m_containingBlock = blck;
+                m_Id = idx;
+                m_TableId = tabid;
 
-                this.Id = idx;
-                this.TableId = tabid;
-                this.Type = blck.GetParameterType(idx);
+                m_parameterName = m_containingBlock.GetLocalName(m_Id, m_TableId);
+                m_internalName = m_containingBlock.GetParamDef(m_Id).IntName;
+                m_Type = m_containingBlock.GetParameterType(m_Id);
             }
 
             public Parameter(IIParamBlock2 blck, IParamAlias alias)
             {
-                this.ParamBlock = blck;
-                this.Name = alias.Alias;
-                //Internal names are not added for aliases
+                m_containingBlock = blck;
+                m_Id = alias.Id;
+                m_TableId = alias.TabIndex;
 
-                this.Id = alias.Id;
-                this.TableId = alias.TabIndex;
-                this.Type = blck.GetParameterType(alias.Id);
+                m_parameterName = alias.Alias;
+                //Internal names are not added for aliases
+                m_Type = m_containingBlock.GetParameterType(m_Id);
             }
 
             public bool IsMapType
             {
                 get
                 {
-                    switch (Type)
+                    switch (m_Type)
                     {
                         case ParamType2.Texmap:
                         case ParamType2.TexmapTab:
@@ -179,75 +192,93 @@ namespace MaxSceneServer
 
             public bool SetValue(bool value)
             {
-                return ParamBlock.SetValue(Id, 0, value ? 1 : 0, TableId);
+                return m_containingBlock.SetValue(m_Id, 0, value ? 1 : 0, m_TableId);
             }
             public bool SetValue(float value)
             {
-                return ParamBlock.SetValue(Id, 0, value, TableId);
+                return m_containingBlock.SetValue(m_Id, 0, value, m_TableId);
             }
             public bool SetValue(ITexmap value)
             {
-                return ParamBlock.SetValue(Id, 0, value, TableId);
+                return m_containingBlock.SetValue(m_Id, 0, value, m_TableId);
             }
             public bool SetValue(IAColor value)
             {
-                return ParamBlock.SetValue(Id, 0, value, TableId);
+                return m_containingBlock.SetValue(m_Id, 0, value, m_TableId);
             }
             public bool SetValue(IColor value)
             {
-                return ParamBlock.SetValue(Id, 0, value, TableId);
+                return m_containingBlock.SetValue(m_Id, 0, value, m_TableId);
             }
             public bool SetValue(string value)
             {
-                return ParamBlock.SetValue(Id, 0, value, TableId);
+                return m_containingBlock.SetValue(m_Id, 0, value, m_TableId);
             }
 
             public fRGBA GetColour()
             {
-                return ParamBlock.GetAColor(Id, 0, TableId).TofRGBA();
+                return m_containingBlock.GetAColor(m_Id, 0, m_TableId).TofRGBA();
             }
 
             public string GetString()
             {
-                return ParamBlock.GetStr(Id, 0, TableId);
+                return m_containingBlock.GetStr(m_Id, 0, m_TableId);
             }
 
             public float GetFloat() //can also return integer types
             {
-                switch (Type)
+                switch (m_Type)
                 {
                     case ParamType2.Int:
                     case ParamType2.Int64:
                     case ParamType2.Int64Tab:
-                        return ParamBlock.GetInt(Id, 0, TableId);
+                        return m_containingBlock.GetInt(m_Id, 0, m_TableId);
                     default:
-                        return ParamBlock.GetFloat(Id, 0, TableId);
+                        return m_containingBlock.GetFloat(m_Id, 0, m_TableId);
                 }
             }
 
             public bool GetBool()
             {
-                return (ParamBlock.GetInt(Id, 0, TableId) > 0);
+                return (m_containingBlock.GetInt(m_Id, 0, m_TableId) > 0);
             }
 
-            public MapInformation GetMap()
+            protected ParameterReference GetPortableReference()
             {
-                MapInformation map = new MapInformation();
+                return new ParameterReference
+                {
+                    m_ownerAnimHandle = Autodesk.Max.GlobalInterface.Instance.Animatable.GetHandleByAnim(m_containingBlock.Owner),
+                    m_paramBlockId = m_containingBlock.Id,
+                    m_paramId = m_Id,
+                    m_tableId = m_TableId
+                };
+            }
 
-                switch (Type)
+            public MaterialReference GetMaterial()
+            {
+                return new MaterialReference { m_parameterReference = GetPortableReference() };
+            }
+
+            public MapReference GetMap()
+            {
+                MapReference map = new MapReference();
+
+                switch (m_Type)
                 {
                     case ParamType2.Texmap:
                     case ParamType2.TexmapTab:
-                        ITexmap t = ParamBlock.GetTexmap(Id, 0, TableId);
+                        ITexmap t = m_containingBlock.GetTexmap(m_Id, 0, m_TableId);
                         if (t == null)
                         {
                             return null;
                         }
+
                         if (t is IBitmapTex)
                         {
-                            Log.Add("Encountered bitmap but dont process these yet");
-                            return null;
+                            map.m_mapType = "TexMap"; 
                         }
+
+                        map.m_mapName = t.Name;
 
                         Log.Add("We dont render procedurals yet.");
                         break;
@@ -255,30 +286,46 @@ namespace MaxSceneServer
 
                     case ParamType2.Bitmap:
                     case ParamType2.BitmapTab:
-                        IPBBitmap b = ParamBlock.GetBitmap(Id, 0, TableId);
+                        IPBBitmap b = m_containingBlock.GetBitmap(m_Id, 0, m_TableId);
+                        
                         if (b == null)
                         {
                             return null;
                         }
-                        map.Filename = b.Bi.Filename;
+
+                        map.m_mapName = b.Bi.Filename;
+
+                        map.m_mapType = "Bitmap";
                         break;
 
                     case ParamType2.Filename:
                     case ParamType2.FilenameTab:
-                        map.Filename = ParamBlock.GetStr(Id, 0, TableId);
+                        string fn = m_containingBlock.GetStr(m_Id, 0, m_TableId);
+
+                        if (fn == null)
+                        {
+                            return null;
+                        }
+
+                        map.m_mapName = fn;
+
+                        map.m_mapType = "Filename";
                         break;
 
                     default:
-                        Log.Add("Cannot convert ParamType2: " + Type.ToString() + " to Map");
-                        break;
+                        Log.Add("Cannot convert ParamType2: " + m_Type.ToString() + " to Map");
+                        return null;
                 }
 
+                map.m_parameterReference = GetPortableReference();
+
                 return map;
+
             }
 
             public object GetValue()
             {
-                switch (Type)
+                switch (m_Type)
                 {
                     case ParamType2.Bool:
                     case ParamType2.Bool2:
@@ -288,7 +335,7 @@ namespace MaxSceneServer
 
                     case ParamType2.Frgba:
                     case ParamType2.Rgba:
-                        IAColor c = ParamBlock.GetAColor(Id, 0, TableId);
+                        IAColor c = m_containingBlock.GetAColor(m_Id, 0, m_TableId);
                         return GetColour();
 
                     case ParamType2.PcntFrac:
@@ -312,9 +359,13 @@ namespace MaxSceneServer
                     case ParamType2.StringTab:
                         return GetString();
 
+                    case ParamType2.Mtl:
+                    case ParamType2.MtlTab:
+                        return GetMaterial();
+
                     default:
                         //throw new Exception("Don't know type for ParamType2: " + Type.ToString());
-                        Log.Add("Don't know how to get ParamType2: " + Type.ToString());
+                        Log.Add("Don't know how to get ParamType2: " + m_Type.ToString());
                         return null;
                 }
             }

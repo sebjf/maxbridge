@@ -42,14 +42,40 @@ namespace Messaging
     [Serializable]
     public class MaterialInformation
     {
-        public string Class;
+        public string m_className;
+        public string m_materialName;
+
         public Dictionary<string, object> MaterialProperties = new Dictionary<string, object>();
     }
 
+    /* The MaterialReference and MapReference are used to identify a specific object, that can be retrieved later, because to process it may be expensive.
+     * These references are highly volatile. Not only should they not be stored, but every time the user wants, say, a map for a particular material slot,
+     * that material should be retrieved along with the latest reference, in case the user in max has changed the map since the GetMaterial() method was last
+     * called. */
+
+    /* The ParameterReference objects contains the information required to find and acquire any property value with no starting reference. */
+
     [Serializable]
-    public class MapInformation
+    public class ParameterReference
     {
-        public string Filename;
+        public UIntPtr m_ownerAnimHandle;
+        public short m_paramBlockId;
+        public short m_paramId;
+        public int m_tableId;
+    }
+
+    [Serializable]
+    public class MaterialReference
+    {
+        public ParameterReference m_parameterReference;
+    }
+
+    [Serializable]
+    public class MapReference
+    {
+        public ParameterReference m_parameterReference;
+        public string m_mapType;
+        public string m_mapName;
     }
 
     [Serializable]

@@ -10,23 +10,19 @@ namespace MaxUnityBridge
 {
     public partial class UnityImporter
     {
-
-        public UpdateProcessor UpdateProcessor { get; set; }
         protected SimpleStreamClient pipe;
         protected BinaryFormatter formatter = new BinaryFormatter();
 
-        private GeometryProcessor GeometryProcessor = new GeometryProcessor();
+        private GeometryCore GeometryCore = new GeometryCore();
+        private MaterialsCore MaterialsCore = new MaterialsCore();
 
         public UnityImporter()
         {
             pipe = new SimpleStreamClient(15155, Debug.Log);
-            UpdateProcessor = new UpdateProcessor();
         }
 
-        protected void ProcessIsochronous(UnityMessage message)
+        protected UnityMessage ExchangeIsochronous(UnityMessage message)
         {
-            Debug.Log("Beginning import");
-
             try
             {
                 pipe.SendMessage(message);
@@ -37,7 +33,21 @@ namespace MaxUnityBridge
             }
 
             object m = pipe.ReceiveMessage();
-            ProcessMessage(m as UnityMessage);
+
+            if (!(m is UnityMessage))
+            {
+                Debug.Log("Could not receive message. Received type " + m.GetType().Name);
+                return null;
+            }
+
+            return m as UnityMessage;
+        }
+
+        protected void ProcessIsochronous(UnityMessage message)
+        {
+            Debug.Log("Beginning import");
+
+            ProcessMessage(ExchangeIsochronous(message));
 
             Debug.Log("Update Complete.");
         }
@@ -58,7 +68,7 @@ namespace MaxUnityBridge
 
             if (message is MessageGeometryUpdate)
             {
-                GeometryProcessor.ProcessMessage(message as MessageGeometryUpdate);
+                GeometryCore.ProcessMessage(message as MessageGeometryUpdate);
                 return;
             }
 

@@ -38,7 +38,7 @@ namespace MaxUnityBridge.Geometry
 
 
 
-    internal partial class GeometryProcessor
+    internal partial class GeometryCore
     {
         /* One third of a face */
         protected struct Triplet

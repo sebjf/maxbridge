@@ -47,6 +47,34 @@ namespace Messaging
         public GeometryNode[] Geometries;
     }
 
-   
+    [Serializable]
+    public class MessageMaterialRequest : UnityMessage
+    {
+        public MessageMaterialRequest(string nodeName)
+        {
+            m_nodeName = nodeName;
+            m_materialIndex = -1;
+        }
+
+        public MessageMaterialRequest(string nodeName, int materialIndex)
+        {
+            m_nodeName = nodeName;
+            m_materialIndex = materialIndex;
+        }
+
+        public readonly string m_nodeName;
+        public readonly int m_materialIndex;
+    }
+
+    [Serializable]
+    public class MessageMaterials : UnityMessage
+    {
+        public MessageMaterials(IEnumerable<MaterialInformation> matching_materials)
+        {
+            m_matchingMaterials = new List<MaterialInformation>(matching_materials);
+        }
+
+        public readonly List<MaterialInformation> m_matchingMaterials;
+    }
 
 }

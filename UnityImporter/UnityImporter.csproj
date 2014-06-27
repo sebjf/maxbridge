@@ -48,9 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client\Operations.cs" />
-    <Compile Include="Modules\Geometry\GeometryProcessor.cs" />
-    <Compile Include="Modules\Materials\MaterialsProcessor.cs" />
+    <Compile Include="Modules\Geometry\GeometryCore.cs" />
+    <Compile Include="Modules\Materials\IMaterialsBinding.cs" />
+    <Compile Include="Modules\Materials\MaterialsBinding.cs" />
+    <Compile Include="Modules\Materials\MaterialsCore.cs" />
     <Compile Include="Modules\Geometry\MeshConverter.cs" />
+    <Compile Include="Modules\Materials\MaterialTemplate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Client\UnityImporter.cs" />
     <Compile Include="UI\UnityImporterWindow.cs" />
@@ -82,8 +85,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /y "$(TargetDir)$(TargetName).*" "D:\Projects\Unity Import Test\Assets\"
-copy /y "$(TargetDir)Messaging.*" "D:\Projects\Unity Import Test\Assets\"</PostBuildEvent>
+    <PostBuildEvent>copy /y "$(TargetDir)$(TargetName).*" "D:\Projects\UnityImportTest\Assets\maximport\"
+copy /y "$(TargetDir)Messaging.*" "D:\Projects\UnityImportTest\Assets\maximport\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

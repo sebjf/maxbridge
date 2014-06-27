@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace MaxUnityBridge.Geometry
 {
-    internal partial class GeometryProcessor : MonoBehaviour
+    internal partial class GeometryCore : MonoBehaviour
     {
         //Unity is a left handed Y up coordinate system, whereas Max is a right handed Z up coordinate system.
         //To convert points between the two we must swap Z & Y, then mirror (invert) along the X and Z (unity) axis.

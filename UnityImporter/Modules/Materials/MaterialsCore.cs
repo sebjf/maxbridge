@@ -7,21 +7,23 @@ using Messaging;
 
 namespace MaxUnityBridge
 {
-    public partial class UpdateProcessor
+    public class MaterialsCore
     {
+
+
         protected Material ImportMaterial(MaterialInformation m)
         {
-            if (m.Class == "Standard")
+            if (m.m_className == "Standard")
             {
                 return ImportMaterial_Standard(m);
             }
 
-            if (m.Class == "Arch & Design")
+            if (m.m_className == "Arch & Design")
             {
                 return (new MentalRayArchDesignMaterial(new MentalRayArchDesignMaterialAccessor(m))).CreateUnityMaterial();
             }
 
-            throw new Exception("The material type: " + m.Class + " is not supported.");
+            throw new Exception("The material type: " + m.m_className + " is not supported.");
         }
 
         protected Material ImportMaterial_Standard(MaterialInformation m)
@@ -43,8 +45,8 @@ namespace MaxUnityBridge
             public fRGBA refl_color { get { return (fRGBA)source.MaterialProperties["refl_color"]; } }
             public float refl_gloss { get { return (float)source.MaterialProperties["refl_gloss"]; } }
             public float refl_weight { get { return (float)source.MaterialProperties["refl_weight"]; } }
-            public MapInformation bump_map { get { return source.MaterialProperties["bump_map"] as MapInformation; } }
-            public MapInformation diff_color_map { get { return source.MaterialProperties["diff_color_map"] as MapInformation; } }
+            public MapReference bump_map { get { return source.MaterialProperties["bump_map"] as MapReference; } }
+            public MapReference diff_color_map { get { return source.MaterialProperties["diff_color_map"] as MapReference; } }
 
         }
 
@@ -53,26 +55,15 @@ namespace MaxUnityBridge
             public MentalRayArchDesignMaterial(MentalRayArchDesignMaterialAccessor mat)
             {
                 DiffuseColour = ToColor(mat.diff_color) * mat.diff_weight;
-                DiffuseMap = ToTexture2D(mat.diff_color_map);
+
                 Glossiness = mat.refl_gloss;
                 ReflectionColour = ToColor(mat.refl_color) * mat.refl_weight;
-                NormalMap = ToTexture2D(mat.bump_map);
+
             }
 
             public static Color ToColor(fRGBA c)
             {
                 return new Color(c.r, c.g, c.b, c.a);
-            }
-
-            public static Texture2D ToTexture2D(MapInformation m)
-            {
-                if (m == null)
-                    return null;
-
-                if (m.Filename == null)
-                    return null;
-
-                return Resources.Load(m.Filename, typeof(Texture2D)) as Texture2D;
             }
 
 
