@@ -1,5 +1,6 @@
 ﻿using Autodesk.Max;
 using Messaging;
+using AsyncStream;
 
 namespace MaxSceneServer
 {
@@ -7,39 +8,37 @@ namespace MaxSceneServer
     {
         protected IGlobal _gi;
 
-        private SimpleStreamServer _pipe;
+        private SimpleStreamConnection m_pipe;
 
-        public MaxSceneServer(IGlobal global)
+        public MaxSceneServer(SocketStreamConnection pipe)
         {
-            _gi = global;
+            _gi = Autodesk.Max.GlobalInterface.Instance;
+            m_pipe = new SimpleStreamConnection(pipe, ProcessMessage, Log.Add);
+            Log.Add("New Client Connection.");
         }
 
-        public void StartServer()
+        ~MaxSceneServer()
         {
-            _pipe = new SimpleStreamServer("MaxUnityBridge", ProcessMessage, Log.Add);
-        }
-
-        public void StopServer()
-        {
+            Log.Add("Client Disconnected.");
         }
 
         protected void ProcessMessage(UnityMessage message)
         {
             if (message is MessagePing)
             {
-                _pipe.SendMessage(new MessagePing("Hello from Max!"));
+                m_pipe.SendMessage(new MessagePing("Hello from Max!"));
                 return;
             }
 
             if (message is MessageGeometryRequest)
             {
-                _pipe.SendMessage(new MessageGeometryUpdate(CreateUpdates()));
+                m_pipe.SendMessage(new MessageGeometryUpdate(CreateUpdates()));
                 return;
             }
 
             if (message is MessageMaterialRequest)
             {
-                _pipe.SendMessage(new MessageMaterials(GetMaterials(message as MessageMaterialRequest)));
+                m_pipe.SendMessage(new MessageMaterials(GetMaterials(message as MessageMaterialRequest)));
                 return;
             }
 
@@ -50,7 +49,7 @@ namespace MaxSceneServer
 
         protected void SendError(string msg)
         {
-            _pipe.SendMessage(new MessageError(msg));
+            m_pipe.SendMessage(new MessageError(msg));
         }
 
     }

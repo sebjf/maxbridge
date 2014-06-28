@@ -5,6 +5,8 @@ using System.Text;
 using Autodesk.Max;
 using Autodesk.Max.Plugins;
 using System.Threading;
+using AsyncStream;
+using Messaging;
 
 
 namespace MaxSceneServer
@@ -81,7 +83,7 @@ namespace MaxSceneServer
         }
 
         protected IGlobal global;
-        protected MaxSceneServerFactory plugin;
+        protected SocketStreamServer m_server;
 
         public override void Dispose()
         {
@@ -103,14 +105,18 @@ namespace MaxSceneServer
 
         public override void Stop()
         {
-            plugin.StopServer();
+            
         }
 
         protected void beginUnityServer()
         {
             Log.Add("[m] Starting MaxUnityBridge Server.");
-            plugin = new MaxSceneServerFactory();
-            plugin.StartServer();
+            m_server = new SocketStreamServer(15155, onNewClientConnection);
+        }
+
+        protected void onNewClientConnection(SocketStreamConnection client)
+        {
+            new MaxSceneServer(client);
         }
     }
 }

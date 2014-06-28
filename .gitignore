@@ -3,3 +3,6 @@
 *\Debug
 *\Release
 todo.txt
+*.dll
+*.exe
+*.meta

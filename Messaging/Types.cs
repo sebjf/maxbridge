@@ -58,7 +58,7 @@ namespace Messaging
     [Serializable]
     public class ParameterReference
     {
-        public UIntPtr m_ownerAnimHandle;
+        public ulong m_ownerAnimHandle;
         public short m_paramBlockId;
         public short m_paramId;
         public int m_tableId;

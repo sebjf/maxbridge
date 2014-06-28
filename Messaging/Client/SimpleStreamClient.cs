@@ -83,9 +83,9 @@ namespace Messaging
 
                 return MessageSerializers.DeserializeObject(data);
             }
-            catch
+            catch(Exception e)
             {
-                Log("Could not recieve message, there may be garbage in the pipe. Closing it...");
+                Log("Could not recieve message, there may be garbage in the pipe. Closing it..." + e.Message);
                 try
                 {
                     _pipe.Client.Disconnect(false);

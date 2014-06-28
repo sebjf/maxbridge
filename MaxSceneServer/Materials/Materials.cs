@@ -8,6 +8,24 @@ using Autodesk.Max;
 
 namespace MaxSceneServer
 {
+    public static class DictionaryExtensions
+    {
+        public static void TryAddUnique<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        {
+            if (key == null)
+            {
+                return;
+            }
+
+            if (dictionary.ContainsKey(key))
+            {
+                return;
+            }
+
+            dictionary.Add(key, value);
+        }
+    }
+
     public partial class MaxSceneServer
     {
 
@@ -39,13 +57,12 @@ namespace MaxSceneServer
             MaterialInformation m = new MaterialInformation();
             m.m_className = material.ClassName;
 
+            var prps = EnumerateProperties(material).ToList();
+
             foreach (var p in EnumerateProperties(material))
             {
-                m.MaterialProperties.Add(p.m_parameterName, p.GetValue());
-                if (p.m_internalName != null)
-                {
-                    m.MaterialProperties.Add(p.m_internalName, p.GetValue());
-                }
+                m.MaterialProperties.TryAddUnique(p.m_parameterName, p.GetValue());
+                m.MaterialProperties.TryAddUnique(p.m_internalName, p.GetValue());
             }
 
             return m;

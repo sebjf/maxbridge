@@ -35,7 +35,8 @@ namespace AsyncStream
             }
             catch
             {
-                //the connection has been closed
+                //socket closed
+                _Stream.Close();
                 return;
             }
 
@@ -47,9 +48,14 @@ namespace AsyncStream
                 this.OnMessageReceived(new MessageEventArgs(destinationArray));
             }
 
+            if (length <= 0) //if EndReceive returns 0 its because the remote host has called Shutdown.
+            {
+                _Stream.Close();
+                return;
+            }
+
             lock (this._InstanceLock)
             {
-
                 if (this._Stream.Connected)
                 {
                     try

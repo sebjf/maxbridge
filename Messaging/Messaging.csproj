@@ -44,14 +44,14 @@
   <ItemGroup>
     <Compile Include="AsyncStream\SocketStreamBase.cs" />
     <Compile Include="AsyncStream\SocketStreamConnection.cs" />
-    <Compile Include="AsyncStream\SocketStreamServer.cs" />
+    <Compile Include="Server\SocketStreamServer.cs" />
     <Compile Include="AsyncStream\MessageEvent.cs" />
     <Compile Include="Client\SimpleStreamClient.cs" />
     <Compile Include="MaxTypes.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="MessageSerializers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Server\SimpleStreamServer.cs" />
+    <Compile Include="Server\SimpleStreamConnection.cs" />
     <Compile Include="Types.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

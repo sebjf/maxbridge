@@ -35,6 +35,41 @@ namespace MaxSceneServer
                 }
             }
         }
+
+        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector1, Func<TSource, TKey> keySelector2)
+        {
+            HashSet<TKey> seenKeys = new HashSet<TKey>();
+            foreach (TSource element in source)
+            {
+                if (seenKeys.Add(keySelector1(element)))
+                {
+                    yield return element;
+                }
+                if (seenKeys.Add(keySelector2(element)))
+                {
+                    yield return element;
+                }
+            }
+        }
+    }
+
+    public static class IReferenceMakerExtensions
+    {
+        public static IEnumerable<IIParamBlock2> GetParamBlocks(this IReferenceMaker obj)
+        {
+            for (int i = 0; i < obj.NumParamBlocks; i++)
+            {
+                yield return obj.GetParamBlock(i);
+            }
+        }
+
+        public static IEnumerable<IReferenceTarget> GetReferenceTargets(this IReferenceMaker obj)
+        {
+            for (int i = 0; i < obj.NumRefs; i++)
+            {
+                yield return obj.GetReference(i);
+            }
+        }
     }
 
     public partial class MaxSceneServer
@@ -42,6 +77,17 @@ namespace MaxSceneServer
         #region Parameter Enumeration
 
         /* Based on http://forums.cgsociety.org/archive/index.php/t-1041239.html */
+
+        protected IEnumerable<Parameter> EnumerateParamBlocks(IReferenceMaker obj)
+        {
+            for (int i = 0; i < obj.NumParamBlocks; i++)
+            {
+                foreach (var p in EnumerateParamBlock(obj.GetParamBlock(i)))
+                {
+                    yield return p;
+                }
+            }
+        }
 
         protected IEnumerable<Parameter> EnumerateParamBlock(IIParamBlock2 block)
         {
@@ -74,6 +120,8 @@ namespace MaxSceneServer
         }
 
         //check references! eq. to what maxscript uses to find all calsses
+        //http://forums.cgsociety.org/archive/index.php/t-1041239.html
+
         protected IEnumerable<Parameter> EnumerateReferences(IReferenceMaker obj, bool recursive = false)
         {
             for (int i = 0; i < obj.NumRefs; i++)
@@ -114,7 +162,31 @@ namespace MaxSceneServer
 
         public IEnumerable<Parameter> EnumerateProperties(IReferenceMaker obj)
         {
-            return EnumerateReferences(obj).DistinctBy(p => p.m_parameterName);
+            //some materials, like standard material, whose paramters change depending on settings, will have paramblocks within containers.
+            //we do not want to recurse the entire graph though, or else we will start to enumerate things like texmap references. So the following
+            //gets the first level of reference targets, then enumerates all the parameters availble from them and stops there
+
+            foreach (var r in obj.GetReferenceTargets())
+            {
+                if (r == null)
+                {
+                    continue; //yes these can be nul as well
+                }
+
+                if (r is IIParamBlock2)
+                {
+                    foreach (var p in EnumerateParamBlock((IIParamBlock2)r))
+                    {
+                        yield return p;
+                    }
+                    continue;
+                }
+
+                foreach(var p in EnumerateParamBlocks(r))
+                {
+                    yield return p;
+                }
+            }
         }
 
         #endregion
@@ -134,7 +206,7 @@ namespace MaxSceneServer
 
             public Parameter(ParameterReference portableReference)
             {
-                IAnimatable anim = Autodesk.Max.GlobalInterface.Instance.Animatable.GetAnimByHandle(portableReference.m_ownerAnimHandle);
+                IAnimatable anim = Autodesk.Max.GlobalInterface.Instance.Animatable.GetAnimByHandle(new UIntPtr(portableReference.m_ownerAnimHandle));
 
                 m_containingBlock = anim.GetParamBlockByID(portableReference.m_paramBlockId);
                 m_Id = portableReference.m_paramId;
@@ -247,7 +319,7 @@ namespace MaxSceneServer
             {
                 return new ParameterReference
                 {
-                    m_ownerAnimHandle = Autodesk.Max.GlobalInterface.Instance.Animatable.GetHandleByAnim(m_containingBlock.Owner),
+                    m_ownerAnimHandle = Autodesk.Max.GlobalInterface.Instance.Animatable.GetHandleByAnim(m_containingBlock.Owner).ToUInt64(),
                     m_paramBlockId = m_containingBlock.Id,
                     m_paramId = m_Id,
                     m_tableId = m_TableId
