@@ -20,5 +20,10 @@ namespace MaxUnityBridge
             return m.m_matchingMaterials;
         }
 
+        public IEnumerable<MaterialInformation> GetSubMaterials(MaterialInformation material, int index)
+        {
+            var m = ExchangeIsochronous(new MessageMaterialRequest(material.m_handle, index)) as MessageMaterials;
+            return m.m_matchingMaterials;
+        }
     }
 }

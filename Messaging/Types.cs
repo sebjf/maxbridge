@@ -45,7 +45,28 @@ namespace Messaging
         public string m_className;
         public string m_materialName;
 
-        public Dictionary<string, object> MaterialProperties = new Dictionary<string, object>();
+        /* Like the map reference, this is analogous to a pointer to the actual material object. Be careful with it, 
+         * Max (or more likely the user) could change it at any moment. Use it, for example, to get submaterials
+         * and then forget it.*/
+        public ulong m_handle;
+
+        public List<MaterialProperty> MaterialProperties = new List<MaterialProperty>();
+    }
+
+    [Serializable]
+    public class MaterialProperty
+    {
+        public string m_name;
+        public string m_alias;
+        public object m_value;
+
+        public MaterialProperty(string name, string alias, object value)
+        {
+            m_name = name;
+            m_alias = name;
+            if (alias != null) { m_alias = alias; }
+            m_value = value;
+        }
     }
 
     /* The MaterialReference and MapReference are used to identify a specific object, that can be retrieved later, because to process it may be expensive.
@@ -79,7 +100,7 @@ namespace Messaging
     }
 
     [Serializable]
-    public struct fRGBA
+    public class fRGBA
     {
         public float r, g, b, a;
 
@@ -89,6 +110,10 @@ namespace Messaging
             this.g = g;
             this.b = b;
             this.a = a;
+        }
+
+        public fRGBA() //for the deserialiser
+        {
         }
 
         public override string ToString()

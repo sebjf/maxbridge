@@ -18,6 +18,21 @@ namespace MaxSceneServer
         {
             return new fRGBA(color.R, color.G, color.B, color.A);
         }
+
+        public static fRGBA TofRGBA(this IColor color)
+        {
+            return new fRGBA(color.R, color.G, color.B, 1.0f);
+        }
+
+        public static float Length(this IAColor color)
+        {
+            return color.R + color.G + color.B + color.A;
+        }
+
+        public static float Length(this IColor color)
+        {
+            return color.R + color.G + color.B;
+        }
     }
 
     public static class LinqExtensions
@@ -170,7 +185,7 @@ namespace MaxSceneServer
             {
                 if (r == null)
                 {
-                    continue; //yes these can be nul as well
+                    continue; //yes these can be null as well
                 }
 
                 if (r is IIParamBlock2)
@@ -179,6 +194,15 @@ namespace MaxSceneServer
                     {
                         yield return p;
                     }
+                    continue;
+                }
+
+                if (r is IISubMap)
+                {
+                    continue;
+                }
+                if (r is IBitmap)
+                {
                     continue;
                 }
 
@@ -289,7 +313,32 @@ namespace MaxSceneServer
 
             public fRGBA GetColour()
             {
-                return m_containingBlock.GetAColor(m_Id, 0, m_TableId).TofRGBA();
+                /* If a three component colour is retrieved as a four component colour it will be black. Since the type does not 
+                 * indicate which one it is, we get both and check which one should be returned. */
+
+                IAColor ac = m_containingBlock.GetAColor(m_Id, 0, m_TableId);
+                IColor c = m_containingBlock.GetColor(m_Id, 0, m_TableId);
+
+                fRGBA colour = c.TofRGBA();
+
+                if (ac.Length() != 0)
+                {
+                    //at least one component is greater than zero, so this one is valid and we should use this, otherwise even if 
+                    //the other one is black, it will turn out the same anyway
+                    colour = ac.TofRGBA();
+                }
+
+                switch (m_Type)
+                {   
+                    case ParamType2.Rgba:
+                    case ParamType2.Frgba:
+
+                        //should we check if its 0/255 or 0f/1f here?
+
+                        break;
+                }
+
+                return colour;
             }
 
             public string GetString()
@@ -407,7 +456,6 @@ namespace MaxSceneServer
 
                     case ParamType2.Frgba:
                     case ParamType2.Rgba:
-                        IAColor c = m_containingBlock.GetAColor(m_Id, 0, m_TableId);
                         return GetColour();
 
                     case ParamType2.PcntFrac:

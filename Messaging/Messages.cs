@@ -50,10 +50,18 @@ namespace Messaging
     [Serializable]
     public class MessageMaterialRequest : UnityMessage
     {
+        /* It is valid to use both the handle and nodename items simultaneously when requesting 
+         * materials. The matching materials from each will be returned sequentially in the 
+         * enumerable. */
+
         public MessageMaterialRequest(string nodeName)
         {
             m_nodeName = nodeName;
-            m_materialIndex = -1;
+        }
+
+        public MessageMaterialRequest(ulong handle)
+        {
+            m_handle = handle;
         }
 
         public MessageMaterialRequest(string nodeName, int materialIndex)
@@ -62,8 +70,15 @@ namespace Messaging
             m_materialIndex = materialIndex;
         }
 
-        public readonly string m_nodeName;
-        public readonly int m_materialIndex;
+        public MessageMaterialRequest(ulong handle, int materialIndex)
+        {
+            m_handle = handle;
+            m_materialIndex = materialIndex;
+        }
+
+        public readonly string m_nodeName = null;
+        public readonly int m_materialIndex = -1;
+        public readonly ulong m_handle = 0;
     }
 
     [Serializable]

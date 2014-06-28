@@ -30,7 +30,14 @@ public class MaterialTemplate : MonoBehaviour {
 
 		/* Set the parameters */
 		foreach(var p in m_parameterMapping){
-			SetGenericMaterialProperty(material, p.m_destinationName, settings.MaterialProperties[p.m_sourceName]);
+
+			if(!p.m_sourceName.IsValid() | !p.m_destinationName.IsValid()){
+				continue;
+			}
+
+			SetGenericMaterialProperty(material, 
+			                           p.m_destinationName, 
+			                           settings.MaterialProperties.GetProperty(p.m_sourceName));
 		}
 
 		return material;
@@ -38,23 +45,34 @@ public class MaterialTemplate : MonoBehaviour {
 
 	protected void SetGenericMaterialProperty(Material destination, string property_name, object value)
 	{
-		switch(GetPropertyType(destination, property_name))
-		{
-		case ShaderUtil.ShaderPropertyType.Color:
-			destination.SetColor(property_name, value.UnityBridgeObjectToColor());
-			break;
-		case ShaderUtil.ShaderPropertyType.Range:
-		case ShaderUtil.ShaderPropertyType.Float:
-			destination.SetFloat(property_name, value.UnityBridgeObjectToFloat());
-			break;
-		case ShaderUtil.ShaderPropertyType.Vector:
-			destination.SetVector(property_name, value.UnityBridgeObjectToVector());
-			break;
-		case ShaderUtil.ShaderPropertyType.TexEnv:
-			
-			break;
+		try{
+
+			ShaderUtil.ShaderPropertyType type = GetPropertyType(destination, property_name);
+			switch(type)
+			{
+			case ShaderUtil.ShaderPropertyType.Color:
+				destination.SetColor(property_name, value.UnityBridgeObjectToColor());
+				break;
+			case ShaderUtil.ShaderPropertyType.Range:
+			case ShaderUtil.ShaderPropertyType.Float:
+				destination.SetFloat(property_name, value.UnityBridgeObjectToFloat());
+				break;
+			case ShaderUtil.ShaderPropertyType.Vector:
+				destination.SetVector(property_name, value.UnityBridgeObjectToVector());
+				break;
+			case ShaderUtil.ShaderPropertyType.TexEnv:
+				
+				break;
+			default:
+				Debug.Log("Unknown shader type " + type.ToString());
+				break;
+			}
+
 		}
-		
+		catch(KeyNotFoundException e)
+		{
+			Debug.Log(e.Message);
+		}
 	}
 	
 	protected ShaderUtil.ShaderPropertyType GetPropertyType(Material destination, string property_name)
@@ -66,8 +84,8 @@ public class MaterialTemplate : MonoBehaviour {
 				return ShaderUtil.GetPropertyType(destination.shader, i);
 			}
 		}
-		
-		throw new UnityException("Could not find property in material shader");
+
+		throw new KeyNotFoundException("Could not find property " + property_name + " in " + destination.shader.name);
 	}
 
 

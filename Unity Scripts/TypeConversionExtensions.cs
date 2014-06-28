@@ -5,12 +5,36 @@ using Messaging;
 
 public static class TypeConversionExtensions {
 
-	public static string ContentsToString<TKey, TValue>(this Dictionary<TKey,TValue> dictionary)
+	public static bool IsValid(this string str)
+	{
+		if(str == null)
+			return false;
+		if(str.Length <= 0)
+			return false;
+
+		return true;
+	}
+
+	public static object GetProperty(this IList<MaterialProperty> list, string property_name)
+	{
+		foreach(var m in list)
+		{
+			if( m.m_name == property_name || m.m_alias == property_name)
+			{
+				return m.m_value;
+			}
+		}
+		
+		throw new KeyNotFoundException("Property " + property_name + " not found.");
+	}
+
+	public static string PrintInfo(this MaterialInformation settings)
 	{
 		string s = "";
-		foreach(var k in dictionary.Keys)
+		s += "Class Name: " + settings.m_className + System.Environment.NewLine;
+		foreach(var p in settings.MaterialProperties)
 		{
-			s += (k.ToString() + " : " + dictionary[k] + System.Environment.NewLine);
+			s += (p.m_name + " (" + p.m_alias + ") " + p.m_value + System.Environment.NewLine);
 		}
 		return s;
 	}

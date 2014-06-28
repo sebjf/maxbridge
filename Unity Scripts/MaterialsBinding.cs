@@ -2,24 +2,21 @@
 using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Messaging;
 using MaxUnityBridge;
 
 public class MaterialsBinding {
 	
 	protected UnityImporter m_importer;
+	protected MaterialManager m_materialManager;
+	protected TemplateManager m_templateManager;
 
 	public MaterialsBinding (UnityImporter importer)
 	{
 		m_importer = importer; //the max side of the code is fully asynchronous and reentrant
-	}
-	
-	public IEnumerable<string> GetSelectedNames()
-	{
-		foreach(var o in Selection.gameObjects)
-		{
-			yield return o.name;
-		}
+		m_materialManager = new MaterialManager(importer);
+		m_templateManager = new TemplateManager(importer);
 	}
 
 	public void ShowMaterialProperties(IEnumerable<GameObject> scene_nodes)
@@ -31,11 +28,9 @@ public class MaterialsBinding {
 			{
 				if(m.Current != null) //this means the object was found, but no material is applied in Max
 				{
-					EditorUtility.DisplayDialog(
-						"Material for " + n.name,
-						m.Current.MaterialProperties.ContentsToString(),
-					    "OK"                   );
-
+					System.IO.StreamWriter fs = new System.IO.StreamWriter(string.Format("{0}\\{1} properties.txt", Application.dataPath, n.name));
+					fs.Write(m.Current.PrintInfo());
+					fs.Close();
 				}
 			}
 		}
@@ -45,40 +40,57 @@ public class MaterialsBinding {
 	{
 		foreach(var n in scene_nodes)
 		{
-			var m = m_importer.GetMaterials(n.name).GetEnumerator();
-			if(m.MoveNext())
-			{
-				if(m.Current == null) //this means the object was found, but no material is applied in Max
-				{
-					SetMaterial(n, null);
-					continue;
-				}
-
-				SetMaterial(n, CreateMaterialFromTemplate(GetTemplate(n), m.Current) );
-			}
+			UpdateNodeMaterials(n);
 		}
 	}
 
-	protected MaterialTemplate GetTemplate(GameObject node)
-	{
-		return node.GetComponent<MaterialTemplate>();
-	}
-
-	protected void SetMaterial(GameObject node, Material material)
+	protected void UpdateNodeMaterials(GameObject node)
 	{
 		Renderer renderer = node.GetComponent<Renderer>();
 		if(renderer != null)
 		{
-			renderer.material = material;
+			UpdateNodeMaterials(renderer);
 		}
 	}
 
-	public Material CreateMaterialFromTemplate(MaterialTemplate template, MaterialInformation settings)
+	protected void UpdateNodeMaterials(Renderer node_renderer)
 	{
-		Material material = template.CreateNewInstance(settings);
-		return material;
+		/* use shared materials because using materials results in copies of the materials being made which add '(instance)' 
+		 * to their name breaking sub material indexing for those that want to use 3rd party importers for geometry */
+		Material[] materials = node_renderer.sharedMaterials; 
+
+		for(int i = 0; i < materials.Length; i++)
+		{
+			int index = -1;
+
+			Match index_match = Regex.Match(materials[i].name, @":[\d]+$");
+			if(index_match.Success)
+			{
+				index = int.Parse(index_match.Value.Substring(1));
+			}
+
+			MaterialInformation settings = m_materialManager.ResovleMaterial(node_renderer.gameObject.name, index);
+			MaterialTemplate template = m_templateManager.ResolveTemplate(node_renderer.gameObject);
+
+			materials[i] = CreateFromTemplate(materials[i], template, settings);
+		}
+
+		node_renderer.sharedMaterials = materials;
 	}
 
-
+	protected Material CreateFromTemplate(Material existing, MaterialTemplate template, MaterialInformation settings)
+	{
+		if(template == null){
+			return existing;
+		}
+		if(settings == null){
+			return existing;
+		}
+		Material m = template.CreateNewInstance(settings);
+		if(existing != null){
+			m.name = existing.name;
+		}
+		return m;
+	}
 
 }
