@@ -35,6 +35,11 @@ public class ImporterWindow : EditorWindow {
 		{
 			binding.ShowMaterialProperties(Selection.gameObjects);
 		}
+		if(GUILayout.Button("Do Map Test"))
+		{
+			binding.DoMapTest(Selection.gameObjects);
+		}
+
 
 	}
 }

@@ -19,6 +19,23 @@ public class MaterialsBinding {
 		m_templateManager = new TemplateManager(importer);
 	}
 
+	public void DoMapTest(IEnumerable<GameObject> scene_nodes)
+	{
+		foreach(var n in scene_nodes)
+		{
+			var m = m_importer.GetMaterials(n.name).GetEnumerator();
+			if(m.MoveNext())
+			{
+				if(m.Current != null) //this means the object was found, but no material is applied in Max
+				{
+					var obj = m.Current.MaterialProperties.GetProperty("diffuseMap");
+					MapReference map = obj as MapReference;
+					m_importer.GetMap(map, 512, 512, @"D:\map_test.bmp");
+				}
+			}
+		}
+	}
+
 	public void ShowMaterialProperties(IEnumerable<GameObject> scene_nodes)
 	{
 		foreach(var n in scene_nodes)

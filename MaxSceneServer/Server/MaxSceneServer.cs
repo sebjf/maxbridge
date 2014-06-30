@@ -42,6 +42,11 @@ namespace MaxSceneServer
                 return;
             }
 
+            if (message is MessageMapRequest)
+            {
+                m_pipe.SendMessage(GetMap(message as MessageMapRequest));
+            }
+
             var error = "Recieved unsupported message type: " + message.GetType().Name;
             Log.Add(error);
             SendError(error);

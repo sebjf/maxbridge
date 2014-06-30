@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Messaging;
 
 public static class TypeConversionExtensions {
@@ -17,15 +18,15 @@ public static class TypeConversionExtensions {
 
 	public static object GetProperty(this IList<MaterialProperty> list, string property_name)
 	{
-		foreach(var m in list)
-		{
-			if( m.m_name == property_name || m.m_alias == property_name)
-			{
-				return m.m_value;
-			}
+
+		try{
+		return list.First( p => 
+		           string.Equals(p.m_name, property_name, System.StringComparison.OrdinalIgnoreCase) || 
+			       string.Equals(p.m_alias, property_name, System.StringComparison.OrdinalIgnoreCase) ).m_value;
+		}catch{
+			throw new KeyNotFoundException("Property " + property_name + " not found.");
 		}
-		
-		throw new KeyNotFoundException("Property " + property_name + " not found.");
+
 	}
 
 	public static string PrintInfo(this MaterialInformation settings)

@@ -92,4 +92,48 @@ namespace Messaging
         public readonly List<MaterialInformation> m_matchingMaterials;
     }
 
+    [Serializable]
+    public class MessageMapRequest : UnityMessage
+    {
+        public MessageMapRequest(MapReference map, string filename)
+        {
+            m_map = map;
+            m_filename = filename;
+        }
+
+        public MessageMapRequest(MapReference map, string filename, int width, int height)
+        {
+            m_map = map;
+            m_filename = filename;
+            m_width = (ushort)width;
+            m_height = (ushort)height;
+        }
+
+        public readonly MapReference m_map;
+
+        public readonly bool m_writeToFile = true;
+        public readonly string m_filename;
+        public readonly ushort m_width = 1024;
+        public readonly ushort m_height = 1024;
+        public readonly bool m_filter = false;
+    }
+
+    [Serializable]
+    public class MessageMapContent : UnityMessage
+    {
+        public MapReference m_mapReference;
+    }
+
+    [Serializable]
+    public class MessageMapFilename : MessageMapContent
+    {
+        public MessageMapFilename(string filename)
+        {
+            m_filename = filename;
+        }
+
+        public string m_filename;
+    }
+
+
 }

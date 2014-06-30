@@ -25,5 +25,10 @@ namespace MaxUnityBridge
             var m = ExchangeIsochronous(new MessageMaterialRequest(material.m_handle, index)) as MessageMaterials;
             return m.m_matchingMaterials;
         }
+
+        public void GetMap(MapReference map_reference, int width, int height, string filename)
+        {
+            ExchangeIsochronous(new MessageMapRequest(map_reference, filename, width, height));
+        }
     }
 }

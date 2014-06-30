@@ -267,13 +267,35 @@ namespace MaxSceneServer
             {
                 get
                 {
+                    return (
+                        IsTexmapType ||
+                        IsBitmapType);
+                }
+            }
+
+            public bool IsTexmapType
+            {
+                get
+                {
                     switch (m_Type)
                     {
                         case ParamType2.Texmap:
                         case ParamType2.TexmapTab:
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+            }
+
+            public bool IsBitmapType
+            {
+                get
+                {
+                    switch (m_Type)
+                    {
                         case ParamType2.Bitmap:
                         case ParamType2.BitmapTab:
-
                             return true;
                         default:
                             return false;
@@ -380,6 +402,16 @@ namespace MaxSceneServer
                 return new MaterialReference { m_parameterReference = GetPortableReference() };
             }
 
+            public IPBBitmap GetBitmap()
+            {
+                return m_containingBlock.GetBitmap(m_Id, 0, m_TableId);
+            }
+
+            public ITexmap GetTexmap()
+            {
+                return m_containingBlock.GetTexmap(m_Id, 0, m_TableId); 
+            }
+
             public MapReference GetMap()
             {
                 MapReference map = new MapReference();
@@ -393,30 +425,24 @@ namespace MaxSceneServer
                         {
                             return null;
                         }
-
                         if (t is IBitmapTex)
                         {
                             map.m_mapType = "TexMap"; 
                         }
 
                         map.m_mapName = t.Name;
-
-                        Log.Add("We dont render procedurals yet.");
                         break;
 
 
                     case ParamType2.Bitmap:
                     case ParamType2.BitmapTab:
                         IPBBitmap b = m_containingBlock.GetBitmap(m_Id, 0, m_TableId);
-                        
                         if (b == null)
                         {
                             return null;
                         }
-
-                        map.m_mapName = b.Bi.Filename;
-
                         map.m_mapType = "Bitmap";
+                        map.m_mapName = b.Bi.Filename;
                         break;
 
                     case ParamType2.Filename:
@@ -428,9 +454,8 @@ namespace MaxSceneServer
                             return null;
                         }
 
-                        map.m_mapName = fn;
-
                         map.m_mapType = "Filename";
+                        map.m_mapName = fn;
                         break;
 
                     default:
