@@ -61,7 +61,7 @@ public class MaterialTemplate : MonoBehaviour {
 				destination.SetVector(property_name, value.UnityBridgeObjectToVector());
 				break;
 			case ShaderUtil.ShaderPropertyType.TexEnv:
-				
+				destination.SetTexture(property_name, TextureManager.Instance.ResolveMap( destination.name + "_" + property_name, value));
 				break;
 			default:
 				Debug.Log("Unknown shader type " + type.ToString());
@@ -87,7 +87,5 @@ public class MaterialTemplate : MonoBehaviour {
 
 		throw new KeyNotFoundException("Could not find property " + property_name + " in " + destination.shader.name);
 	}
-
-
 
 }

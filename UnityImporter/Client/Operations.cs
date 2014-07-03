@@ -26,9 +26,9 @@ namespace MaxUnityBridge
             return m.m_matchingMaterials;
         }
 
-        public void GetMap(MapReference map_reference, int width, int height, string filename)
+        public void GetMap(MapReference map_reference, int width, int height, string destination)
         {
-            ExchangeIsochronous(new MessageMapRequest(map_reference, filename, width, height));
+            ExchangeIsochronous(new MessageMapRequest(map_reference, destination, width, height));
         }
     }
 }

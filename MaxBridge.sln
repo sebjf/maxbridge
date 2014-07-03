@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityImporter", "UnityImporter\UnityImporter.csproj", "{2DE61702-B8C0-4CC5-8D27-7D7500E875CE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity", "UnityImporter\Unity.csproj", "{2DE61702-B8C0-4CC5-8D27-7D7500E875CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxSceneServer", "MaxSceneServer\MaxSceneServer.csproj", "{948F046D-4F9B-4AC4-814D-16DEC6177210}"
 EndProject

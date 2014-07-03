@@ -67,7 +67,9 @@ namespace MaxUnityBridge.Geometry
             var faceGroups = CreateFaceGroupsByMaterialId(faces);
 
 
-            /* Turn the face groups into triplets, by getting the indices for the position, normal and vertex components from the mesh source and splitting the face */
+            /* In Max, and the portable mesh, each triangle is made of a number of faces superimposed on eachother. Those faces contain indices into different vertex arrays.
+             * The vertex arrays contain positions, texture coords, normals, etc. This function flattens these, so each face is made up of 3 sets of 4 indices. One set for
+             * each corner, and the sets containing the indices into the various vertex arrays referenced by the original 'sub'-faces. */
 
             var faceTripletGroups = CreateFaceTripletGroups(faceGroups, 
                 Update.Faces.Cast<ITripleIndex>().ToArray(), 
@@ -76,14 +78,15 @@ namespace MaxUnityBridge.Geometry
                 Update.Faces.Cast<ITripleIndex>().ToArray());
 
 
-            /* For each face triple, dereference the faces so they all reference a single master list of triplets (the vertex components) */
+            /* For each face triple (set of 4 indices), dereference it so they all become indices into a single master list of triplets. This master list can then
+             * be used to create a vertex array. */
 
             var triplets = new FaceTriplets();
 
             var faceindexgroups = DereferenceFaceTripletGroups(faceTripletGroups, triplets).ToList();
 
 
-            /* Build the vertex component arrays based on the master triplet array */
+            /* Build the vertex component arrays based on the master triplet array created above */
 
             var vertexcomponents = BuildVertexComponents(triplets, Update.Vertices, Update.Normals, Update.Vertices, Update.Vertices);
 

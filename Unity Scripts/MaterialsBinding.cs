@@ -11,12 +11,14 @@ public class MaterialsBinding {
 	protected UnityImporter m_importer;
 	protected MaterialManager m_materialManager;
 	protected TemplateManager m_templateManager;
+	protected TextureManager m_textureManager;
 
 	public MaterialsBinding (UnityImporter importer)
 	{
 		m_importer = importer; //the max side of the code is fully asynchronous and reentrant
 		m_materialManager = new MaterialManager(importer);
 		m_templateManager = new TemplateManager(importer);
+		m_textureManager = new TextureManager(importer);
 	}
 
 	public void DoMapTest(IEnumerable<GameObject> scene_nodes)
@@ -72,8 +74,8 @@ public class MaterialsBinding {
 
 	protected void UpdateNodeMaterials(Renderer node_renderer)
 	{
-		/* use shared materials because using materials results in copies of the materials being made which add '(instance)' 
-		 * to their name breaking sub material indexing for those that want to use 3rd party importers for geometry */
+		/* use shared materials, because using materials results in copies of the materials being made which add '(instance)' 
+		 * to their name, breaking sub material indexing for those that want to use 3rd party importers for geometry */
 		Material[] materials = node_renderer.sharedMaterials; 
 
 		for(int i = 0; i < materials.Length; i++)
