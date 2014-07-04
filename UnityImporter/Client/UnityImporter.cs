@@ -3,8 +3,6 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using Messaging;
 using UnityEngine;
-using MaxUnityBridge.Geometry;
-
 
 namespace MaxUnityBridge
 {
@@ -13,7 +11,7 @@ namespace MaxUnityBridge
         protected SimpleStreamClient pipe;
         protected BinaryFormatter formatter = new BinaryFormatter();
 
-        private GeometryCore GeometryCore = new GeometryCore();
+        private GeometryBinding GeometryCore = new GeometryBinding();
         private MaterialsCore MaterialsCore = new MaterialsCore();
 
         public UnityImporter()

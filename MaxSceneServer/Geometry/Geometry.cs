@@ -62,51 +62,120 @@ namespace MaxSceneServer
         {
             GeometryNode update = new GeometryNode();
 
-
             update.Name = node.Name;
             update.Parent = node.ParentNode.Name;
 
             update.Transform = GetTransform(node);
 
-            IMesh mesh = maxGeometry.Mesh;
+            /*
+             * Scene objects have one, or none, material. This member will be that materials name, even if that material is a container like a Composite 
+             * or Shell material. 
+             * The client will attach the Material ID of the face when/if the materials are split out, which will allow the materials
+             * processing code to identify and import the correct material properties later. (In practice, we dont even need to store this - since knowing
+             * the node name will allow us to find it - but sending it allows us to match the functionality of the FBX importer.
+             */
 
-
-
-            update.Vertices = new Point3[mesh.NumVerts];
-
-            fixed (Point3* vertexData = update.Vertices)
+            if (node.Mtl != null)
             {
-                CopyMemory((IntPtr)vertexData, mesh.GetVertPtr(0).Handle,(uint)(sizeof(Point3) * mesh.NumVerts));
+                update.MaterialName = node.Mtl.Name;
             }
 
+            IMesh mesh = maxGeometry.Mesh;
 
+            /* Get the master face array and vertex positions. We split by material id here also for convenience. */
 
+            var facesAndPositions = GetTriMeshFacesAndPositions(mesh);
 
-            foreach (var map in mesh.Maps)
+            update.FaceGroups.AddRange(MakeFaceGroupsFromMaterialIds(facesAndPositions.face_materialIds));
+            update.faceFlags = facesAndPositions.face_flags;
+            update.Channels.Add(facesAndPositions.positions_channel);
+
+            /* Get the remaining properties, such as normals and texture coordinates */
+
+            update.Channels.Add(GetTriMeshNormals(mesh));
+            update.Channels.AddRange(GetTriMeshMapChannels(mesh));
+
+            return update;
+        }
+
+        protected IEnumerable<FaceGroup> MakeFaceGroupsFromMaterialIds(short[] face_materialIds)
+        {
+            Dictionary<short, List<int>> faceLists = new Dictionary<short, List<int>>();
+
+            for (int i = 0; i < face_materialIds.Length; i++)
             {
+                short materialid = face_materialIds[i];
+
+                if (!faceLists.ContainsKey(materialid))
+                {
+                    faceLists.Add(materialid, new List<int>());
+                }
+
+                faceLists[materialid].Add(i);
+            }
+
+            foreach (var p in faceLists)
+            {
+                yield return new FaceGroup { m_materialId = p.Key, m_faceIndices = p.Value.ToArray() };
+            }
+        }
+
+        protected unsafe IEnumerable<VertexChannel> GetTriMeshMapChannels(IMesh mesh)
+        {
+
+
+            /* 3ds Max SDK Programmer's Guide > 3ds Max SDK Features > Rendering > Textures Maps > Mapping Channels */
+            /* There are up to 99 user maps in each mesh:
+             * -2 Alpha
+             * -1 Illum 
+             *  0 vertex colour
+             *  1 default texcoords 
+             *  1 - 99 user uvw maps
+             * Maps can be inspected for a mesh using the Edit > Channel Info... dialog in max.
+             * When maps are added using the modifier stack they are always sequential. I.e. if you add just one uvw unwrap, and set it to map 5, four other preceeding channels will be created.
+             */
+
+            List<VertexChannel> channels = new List<VertexChannel>(); //no unsafe code in iterators
+
+            /* The two hidden maps are not counted in the getNumMaps() return value */
+
+            for (int i = 0; i < mesh.NumMaps; i++)
+            {
+                var map = mesh.Map(i);
+
                 if (map.IsUsed)
                 {
-                    MapChannel channel = new MapChannel();
+                    VertexChannel channel = new VertexChannel();
 
-
-                    channel.Coordinates = new Point3[map.Vnum];
-                    fixed (Point3* dataptr = channel.Coordinates)
+                    channel.m_vertices = new Point3[map.Vnum];
+                    fixed (Point3* dataptr = channel.m_vertices)
                     {
                         CopyMemory((IntPtr)dataptr, map.Tv.Handle, (uint)(sizeof(Point3) * map.Vnum));
                     }
 
-                    channel.Faces = new TVFace[map.Fnum];
-                    fixed (TVFace* dataptr = channel.Faces)
+                    //           channel.m_faces = new TVFace[map.Fnum];  //the indices3 struct is identical to the tvface struct but they are different in the sdk. for efficiency we just indices3 directly here.
+                    channel.m_faces = new Indices3[map.Fnum];
+                    fixed (Indices3* dataptr = channel.m_faces)
                     {
-                        CopyMemory((IntPtr)dataptr, map.Tf.Handle, (uint)(sizeof(TVFace) * map.Fnum));
+                        CopyMemory((IntPtr)dataptr, map.Tf.Handle, (uint)(sizeof(Indices3) * map.Fnum));
                     }
 
-                    update.Channels.Add(channel);
+                    channel.m_type = (VertexChannelType)i;
+
+                    channels.Add(channel);
                 }
             }
 
-            
-            /* The MeshNormalSpec class is intended to store user specified normals. We can use it however to have max calculate the normals in the typical way and provide access to them in an easy way. */
+            return channels;
+        }
+
+        protected unsafe VertexChannel GetTriMeshNormals(IMesh mesh)
+        {
+            VertexChannel channel = new VertexChannel();
+            channel.m_type = VertexChannelType.Normals;
+
+            /* The MeshNormalSpec class is intended to store user specified normals. We can use it however to have max calculate the 
+             * normals in the typical way and provide easy access to them. */
 
             IMeshNormalSpec normalspec = mesh.SpecifiedNormals;
             bool normalsAlreadySpecified = (normalspec.NormalArray != null);
@@ -117,20 +186,20 @@ namespace MaxSceneServer
 
             normalspec.CheckNormals();
 
-            update.Normals = new Point3[normalspec.NumNormals];
+            channel.m_vertices = new Point3[normalspec.NumNormals];
 
-            fixed (Point3* normalData = update.Normals)
+            fixed (Point3* normalData = channel.m_vertices)
             {
                 CopyMemory((IntPtr)normalData, normalspec.NormalArray.Handle, (uint)(sizeof(Point3) * normalspec.NumNormals));
             }
 
             int numnormalfaces = normalspec.NumFaces;
 
-            update.NormalFaces = new Indices3[numnormalfaces];
+            channel.m_faces = new Indices3[numnormalfaces];
             for (int i = 0; i < numnormalfaces; i++)
             {
                 IMeshNormalFace f = normalspec.Face(i);
-                update.NormalFaces[i] = *(Indices3*)f.NormalIDArray;
+                channel.m_faces[i] = *(Indices3*)f.NormalIDArray;
             }
 
             if (!normalsAlreadySpecified)
@@ -138,29 +207,56 @@ namespace MaxSceneServer
                 mesh.ClearSpecifiedNormals();
             }
 
+            return channel;
+        }
 
+        public struct TriMeshFacesAndPositions
+        {
+            public VertexChannel positions_channel;
+            public short[] face_materialIds;
+            public short[] face_flags;
+        }
 
-            update.Faces = new Face[mesh.NumFaces];
+        protected unsafe TriMeshFacesAndPositions GetTriMeshFacesAndPositions(IMesh mesh)
+        {
+            VertexChannel channel = new VertexChannel();
+            channel.m_type = VertexChannelType.Positions;
 
-            fixed (Face* faceData = update.Faces)
+            channel.m_vertices = new Point3[mesh.NumVerts];
+            fixed (Point3* vertexData = channel.m_vertices)
+            {
+                CopyMemory((IntPtr)vertexData, mesh.GetVertPtr(0).Handle, (uint)(sizeof(Point3) * mesh.NumVerts));
+            }
+
+            var faces = new Face[mesh.NumFaces];
+            fixed (Face* faceData = faces)
             {
                 CopyMemory((IntPtr)faceData, mesh.Faces[0].Handle, (uint)(sizeof(Face) * mesh.NumFaces));
             }
 
+            /* Split the face data into seperate arrays. Put the face indices in one with the channel, the others to one side to filter into groups later if the user wants */
 
-            /*
-             * Scene objects have one, or none, material. This member will be that materials name, even if that material is a container like a Composite 
-             * or Shell material. 
-             * The client will attach the Material ID of the face when/if the materials are split out, which will allow the materials
-             * processing code to identify and import the correct material properties later. (In practice, we dont even need to store this - since knowing
-             * the node name will allow us to find it - but sending it allows us to match the functionality of the FBX importer.
-             */
+            TriMeshFacesAndPositions faces_data = new TriMeshFacesAndPositions();
 
-            if(node.Mtl != null){
-                update.MaterialName = node.Mtl.Name;
+            faces_data.face_flags = new short[faces.Length];
+            faces_data.face_materialIds = new short[faces.Length];
+
+            channel.m_faces = new Indices3[faces.Length];
+
+            for (int i = 0; i < faces.Length; i++)
+            {
+                short materialid = (short)((faces[i].flags & 0xFFFF0000) >> 16); //in Max the high word of the flags member contains the material id.
+                short flags = (short)(faces[i].flags & 0x0000FFFF);
+
+                faces_data.face_flags[i] = flags;
+                faces_data.face_materialIds[i] = materialid;
+
+                channel.m_faces[i] = faces[i].v;
             }
 
-            return update;
+            faces_data.positions_channel = channel;
+
+            return faces_data;
         }
 
         unsafe protected TRS GetTransform(IINode node)

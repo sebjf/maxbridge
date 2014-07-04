@@ -5,8 +5,67 @@ using System.Text;
 using UnityEngine;
 using Messaging;
 
-namespace MaxUnityBridge.Geometry
+namespace MaxUnityBridge
 {
+
+    /* These are not actual extension methods, because defining them as such prevents unity from importing the library. Unsure why, perhaps mono does not like
+     * extension classes in lirbaries. Or perhaps it has something to do with extending List<specific-generic>?*/
+    static class ChannelExtensions
+    {
+        public static VertexChannel GetPositionChannel(List<VertexChannel> channels)
+        {
+            var channel = channels.Where(c => c.m_type == VertexChannelType.Positions).FirstOrDefault();
+            if (channel == null)
+            {
+                throw new UnityException("Mesh arrived with no vertex positions!");
+            }
+            return channel;
+        }
+
+        public static VertexChannel GetNormalsChannel(List<VertexChannel> channels)
+        {
+            var channel = channels.Where(c => c.m_type == VertexChannelType.Normals).FirstOrDefault();
+            if (channel == null)
+            {
+                throw new UnityException("Mesh arrived with no normals!");
+            }
+            return channel;
+        }
+
+        public static VertexChannel GetTextureChannel(List<VertexChannel> channels, VertexChannelType channelIndex)
+        {
+            //it is valid, though rare, for a mesh to have no texture coordinates. in this case we will return position data in order that the triplets can be build efficiently.
+            var fallback_channel = channels.Where(c => c.m_type == VertexChannelType.Positions).FirstOrDefault();
+
+            //channel 1 is the default texture coordinate map channel
+            var channel = channels.Where(c => c.m_type == VertexChannelType.Texture1).FirstOrDefault();
+
+            if (channel != null)
+            {
+                fallback_channel = channel;
+            }
+
+            //now we have set up the fallbacks, search for the channel we actually want
+
+            channel = channels.Where(c => c.m_type == (VertexChannelType)channelIndex).FirstOrDefault();
+
+            if (channel == null)
+            {
+                channel = fallback_channel;
+
+                //we will always search for up to two channels by default, and it will not be uncommon to only have one. If the user has requested a channel especially however
+                //we should let them know.
+                if ((int)channelIndex > 2)
+                {
+                    Debug.Log("Warning, could not find request channel number " + channelIndex);
+                }
+            }
+
+            return channel;
+        }
+    }
+    
+
     /* This is the mesh reformatted to mimic the unity mesh structure */
     internal class UnityStyleMesh
     {
@@ -38,7 +97,7 @@ namespace MaxUnityBridge.Geometry
 
 
 
-    internal partial class GeometryCore
+    internal partial class GeometryBinding
     {
         /* One third of a face */
         protected struct Triplet
@@ -56,26 +115,22 @@ namespace MaxUnityBridge.Geometry
         /// </summary>
         /// <param name="Update"></param>
         /// <returns></returns>
-        protected UnityStyleMesh ConvertMeshToUnityMesh(GeometryNode Update)
+        protected UnityStyleMesh ConvertMeshToUnityStyle(GeometryNode Update)
         {
-            var faces = Update.Faces;
-            int facecount = faces.Length;
-
-            /* First, split the faces into face groups (submeshes) based on material ids. we will do that now, because soon we will deal with faces as index triplets
-             * and we do not want to have to store materialids along with each face. */
-
-            var faceGroups = CreateFaceGroupsByMaterialId(faces);
-
-
             /* In Max, and the portable mesh, each triangle is made of a number of faces superimposed on eachother. Those faces contain indices into different vertex arrays.
              * The vertex arrays contain positions, texture coords, normals, etc. This function flattens these, so each face is made up of 3 sets of 4 indices. One set for
              * each corner, and the sets containing the indices into the various vertex arrays referenced by the original 'sub'-faces. */
 
-            var faceTripletGroups = CreateFaceTripletGroups(faceGroups, 
-                Update.Faces.Cast<ITripleIndex>().ToArray(), 
-                Update.NormalFaces.Cast<ITripleIndex>().ToArray(), 
-                Update.Faces.Cast<ITripleIndex>().ToArray(), 
-                Update.Faces.Cast<ITripleIndex>().ToArray());
+            var positionChannel = ChannelExtensions.GetPositionChannel(Update.Channels);
+            var normalChannel = ChannelExtensions.GetNormalsChannel(Update.Channels);
+            var texture_tChannel = ChannelExtensions.GetTextureChannel(Update.Channels, VertexChannelType.Texture1);
+            var texture_yChannel = ChannelExtensions.GetTextureChannel(Update.Channels, VertexChannelType.Texture2);
+
+            var faceTripletGroups = CreateFaceTripletGroups(Update.FaceGroups,
+                positionChannel,
+                normalChannel,
+                texture_tChannel,
+                texture_yChannel);
 
 
             /* For each face triple (set of 4 indices), dereference it so they all become indices into a single master list of triplets. This master list can then
@@ -88,41 +143,11 @@ namespace MaxUnityBridge.Geometry
 
             /* Build the vertex component arrays based on the master triplet array created above */
 
-            var vertexcomponents = BuildVertexComponents(triplets, Update.Vertices, Update.Normals, Update.Vertices, Update.Vertices);
+            var vertexcomponents = BuildVertexComponents(triplets, positionChannel.m_vertices, normalChannel.m_vertices, texture_tChannel.m_vertices, texture_yChannel.m_vertices);
 
 
             return new UnityStyleMesh { components = vertexcomponents, face_groups = faceindexgroups };
         }
-
-        protected class FaceGroup
-        {
-            public int[] FaceIndices;
-            public int MaterialId;
-        }
-
-        protected IEnumerable<FaceGroup> CreateFaceGroupsByMaterialId(Face[] faces)
-        {
-            Dictionary<short, List<int>> faceLists = new Dictionary<short, List<int>>();
-
-            for (int i = 0; i < faces.Length; i++)
-            {
-                short materialid = (short)((faces[i].flags & 0xFFFF0000) >> 16); //in Max the high word of the flags member contains the material id.
-
-                if (!faceLists.ContainsKey(materialid))
-                {
-                    faceLists.Add(materialid, new List<int>());
-                }
-
-                faceLists[materialid].Add(i);
-            }
-
-            foreach (var p in faceLists)
-            {
-                yield return new FaceGroup { MaterialId = p.Key, FaceIndices = p.Value.ToArray() };
-            }
-        }
-
-
 
         protected class FaceTripletGroup
         {
@@ -130,7 +155,7 @@ namespace MaxUnityBridge.Geometry
             public int MaterialId;
         }
 
-        protected IEnumerable<FaceTripletGroup> CreateFaceTripletGroups(IEnumerable<FaceGroup> facegroups, ITripleIndex[] fp, ITripleIndex[] fn, ITripleIndex[] tn, ITripleIndex[] yn)
+        protected IEnumerable<FaceTripletGroup> CreateFaceTripletGroups(IEnumerable<FaceGroup> facegroups, VertexChannel fp, VertexChannel fn, VertexChannel tn, VertexChannel yn)
         {
             foreach (var fg in facegroups)
             {
@@ -138,32 +163,37 @@ namespace MaxUnityBridge.Geometry
             }
         }
 
-        protected FaceTripletGroup CreateFaceTripletGroup(FaceGroup faces, ITripleIndex[] fp, ITripleIndex[] fn, ITripleIndex[] tn, ITripleIndex[] yn)
+        protected FaceTripletGroup CreateFaceTripletGroup(FaceGroup faces, VertexChannel p, VertexChannel n, VertexChannel t, VertexChannel y)
         {
             List<Triplet> triplets = new List<Triplet>();
+
+            var fp = p.m_faces;
+            var fn = n.m_faces;
+            var ft = t.m_faces;
+            var fy = y.m_faces;
 
             if (ChangeCoordinateSystem)
             {
 
-                foreach (var i in faces.FaceIndices)
-                {   
-                    triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = tn[i].i3, y = yn[i].i3 });
-                    triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = tn[i].i2, y = yn[i].i2 });
-                    triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = tn[i].i1, y = yn[i].i1 });
+                foreach (var i in faces.m_faceIndices)
+                {
+                    triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = ft[i].i3, y = fy[i].i3 });
+                    triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = ft[i].i2, y = fy[i].i2 });
+                    triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = ft[i].i1, y = fy[i].i1 });
                 }
             }
             else
             {
                 /* If the coordinate system has changed, swap the winding order */
-                foreach (var i in faces.FaceIndices)
+                foreach (var i in faces.m_faceIndices)
                 {
-                    triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = tn[i].i1, y = yn[i].i1 });
-                    triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = tn[i].i2, y = yn[i].i2 });
-                    triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = tn[i].i3, y = yn[i].i3 });    
+                    triplets.Add(new Triplet { v = fp[i].i1, n = fn[i].i1, t = ft[i].i1, y = fy[i].i1 });
+                    triplets.Add(new Triplet { v = fp[i].i2, n = fn[i].i2, t = ft[i].i2, y = fy[i].i2 });
+                    triplets.Add(new Triplet { v = fp[i].i3, n = fn[i].i3, t = ft[i].i3, y = fy[i].i3 });    
                 }
             }
 
-            return new FaceTripletGroup { MaterialId = faces.MaterialId, Triplets = triplets.ToArray() };
+            return new FaceTripletGroup { MaterialId = faces.m_materialId, Triplets = triplets.ToArray() };
         }
 
 

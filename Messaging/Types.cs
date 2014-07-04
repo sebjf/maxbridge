@@ -12,12 +12,35 @@ namespace Messaging
         public Point3 EulerRotation;
     }
 
+    /* These are the only types that Unity supports for now */
     [Serializable]
-    public class MapChannel
+    public enum VertexChannelType //these values map to the max sdk so we can cast from the map numbers in the max plugin, careful not to change them without modifying that section as well.
     {
-        public int Id;
-        public Point3[] Coordinates;
-        public TVFace[] Faces;
+        Positions       = -3,
+        Normals         = -4,
+        VertexColours   = 0,    //these values map to the max sdk so we can cast from the map numbers in the max plugin, careful not to change them without modifying that section as well.
+        Texture1        = 1,
+        Texture2        = 2,
+        Texture3        = 3,
+        Texture4        = 4,
+        Texture5        = 5,
+        Texture6        = 6,
+        Texture7        = 7     //(anyone who needs more than 7 mapping channels can rebuild this themselves!)
+    }
+
+    [Serializable]
+    public class VertexChannel
+    {
+        public VertexChannelType m_type;
+        public Indices3[] m_faces;
+        public Point3[] m_vertices;
+    }
+
+    [Serializable]
+    public class FaceGroup
+    {
+        public int[] m_faceIndices;
+        public int m_materialId;
     }
 
     [Serializable]
@@ -28,13 +51,10 @@ namespace Messaging
 
         public TRS Transform;
 
-        public Point3[] Vertices;
-        public Face[] Faces;
+        public List<FaceGroup> FaceGroups = new List<FaceGroup>();
+        public List<VertexChannel> Channels = new List<VertexChannel>();
 
-        public Point3[] Normals;
-        public Indices3[] NormalFaces;
-
-        public List<MapChannel> Channels = new List<MapChannel>();
+        public short[] faceFlags;
 
         public string MaterialName;
     }
