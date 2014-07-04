@@ -29,6 +29,7 @@ public class TemplateManager  {
 		MaterialTemplate template = node.AddComponent<MaterialTemplate>();
 		template.m_template = Resources.Load<Material>("Diffuse");
 		template.m_parameterMapping.Add(new MaterialTemplate.ParameterMap() { m_sourceName = "diffuse", m_destinationName = "_Color"});
+		template.m_parameterMapping.Add(new MaterialTemplate.ParameterMap() { m_sourceName = "diffuseMap", m_destinationName = "_MainTex"});
 		return template;
 	}
 

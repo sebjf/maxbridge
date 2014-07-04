@@ -110,7 +110,7 @@ namespace MaxUnityBridge
         {
             mesh.vertices = meshsrc.components.vertices;
             mesh.normals = meshsrc.components.normals;
-            mesh.uv1 = meshsrc.components.uvs;
+            mesh.uv = meshsrc.components.uvs;
             mesh.uv2 = meshsrc.components.uvs2;
 
             mesh.subMeshCount = meshsrc.face_groups.Count;
