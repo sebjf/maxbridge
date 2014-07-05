@@ -11,7 +11,7 @@ public struct Tuple<T1,T2> {
 	
 	public override int GetHashCode ()
 	{
-	//	return Item1.GetHashCode() ^ Item2.GetHashCode(); //http://stackoverflow.com/questions/3841602/why-is-valuetype-gethashcode-implemented-like-it-is/3842515#3842515
+		return Item1.GetHashCode() ^ Item2.GetHashCode(); //http://stackoverflow.com/questions/3841602/why-is-valuetype-gethashcode-implemented-like-it-is/3842515#3842515
 	}
 }
 

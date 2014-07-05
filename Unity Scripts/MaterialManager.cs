@@ -11,7 +11,7 @@ public class MaterialManager {
 
 	protected UnityImporter m_importer;
 
-	protected Dictionary<Tuple<ulong,IMaterialTemplate>, Material> m_materialsCache = new Dictionary<Tuple<ulong,IMaterialTemplate>, Material>();
+	protected Dictionary<ulong, Material> m_materialsCache = new Dictionary<ulong, Material>();
 
 	public MaterialManager (UnityImporter importer)
 	{
@@ -76,18 +76,16 @@ public class MaterialManager {
 
 	public Material ResolveMaterial(Material existing, IMaterialTemplate template, MaterialInformation settings)
 	{
-		Tuple<ulong, IMaterialTemplate> materialProperties = new Tuple<ulong, IMaterialTemplate>(settings.m_handle, template);
-
-		if(!m_materialsCache.ContainsKey(materialProperties))
+		if(!m_materialsCache.ContainsKey(settings.m_handle))
 		{
 			Material m = CreateFromTemplate(existing, template, settings);
 
 			if(m != null){
-				m_materialsCache.Add(materialProperties, m);
+				m_materialsCache.Add(settings.m_handle, m);
 			}
 		}
 
-		return m_materialsCache[materialProperties];
+		return m_materialsCache[settings.m_handle];
 	}
 
 	protected Material CreateFromTemplate(Material existing, IMaterialTemplate template, MaterialInformation settings)
