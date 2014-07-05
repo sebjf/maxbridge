@@ -6,13 +6,19 @@ using UnityEditor;
 using Messaging;
 
 
-public class MaterialTemplate : MonoBehaviour {
+
+public class MaterialTemplate : MonoBehaviour, IMaterialTemplate {
 
 	[Serializable]
 	public class ParameterMap
 	{
 		public string m_sourceName;
 		public string m_destinationName;
+	}
+
+	public string Name
+	{
+		get{ return "Generic Parameter Map"; }
 	}
 
 	public Material m_template;

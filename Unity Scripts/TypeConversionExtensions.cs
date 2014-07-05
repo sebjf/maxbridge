@@ -4,6 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Messaging;
 
+public struct Tuple<T1,T2> {
+	public readonly T1 Item1;
+	public readonly T2 Item2;
+	public Tuple(T1 item1, T2 item2) { Item1 = item1; Item2 = item2;}
+	
+	public override int GetHashCode ()
+	{
+	//	return Item1.GetHashCode() ^ Item2.GetHashCode(); //http://stackoverflow.com/questions/3841602/why-is-valuetype-gethashcode-implemented-like-it-is/3842515#3842515
+	}
+}
+
 public static class TypeConversionExtensions {
 
 	public static bool IsValid(this string str)

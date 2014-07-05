@@ -13,7 +13,7 @@ public class TemplateManager  {
 		m_importer = importer;
 	}
 
-	public MaterialTemplate ResolveTemplate(GameObject node)
+	public IMaterialTemplate ResolveTemplate(GameObject node)
 	{
 		MaterialTemplate t = node.GetComponent<MaterialTemplate>();
 		if(t == null)

@@ -96,10 +96,13 @@ namespace Messaging
 
     /* The ParameterReference objects contains the information required to find and acquire any property value with no starting reference. */
 
+    /* We should look into how often anything other than ITexMaps are used in max. ITexMap is an IAnimatble, so we could actually pass a handle direct to that
+     * object instead of going through the owner as in here. */
+
     [Serializable]
     public class ParameterReference
     {
-        public ulong m_ownerAnimHandle;
+        public ulong m_ownerAnimHandle; //Again, consider this valid for *milliseconds* only!
         public short m_paramBlockId;
         public short m_paramId;
         public int m_tableId;
@@ -117,6 +120,10 @@ namespace Messaging
         public ParameterReference m_parameterReference;
         public string m_mapType;
         public string m_mapName;
+
+        /* This is the handle of the native object in max. It can be used to cache the resolved value locally. 
+        It cannot be used to retreieve an actual object from max, you need an anim(atable) handle for that. */
+        public long m_nativeHandle;    
     }
 
     [Serializable]

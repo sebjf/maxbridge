@@ -78,6 +78,9 @@ public class MaterialsBinding {
 		 * to their name, breaking sub material indexing for those that want to use 3rd party importers for geometry */
 		Material[] materials = node_renderer.sharedMaterials; 
 
+		/* Decide what template to use */
+		IMaterialTemplate template = m_templateManager.ResolveTemplate(node_renderer.gameObject);
+
 		for(int i = 0; i < materials.Length; i++)
 		{
 			int index = -1;
@@ -88,28 +91,14 @@ public class MaterialsBinding {
 				index = int.Parse(index_match.Value.Substring(1));
 			}
 
-			MaterialInformation settings = m_materialManager.ResovleMaterial(node_renderer.gameObject.name, index);
-			MaterialTemplate template = m_templateManager.ResolveTemplate(node_renderer.gameObject);
+			/* Get the actual settings from Max */
+			MaterialInformation settings = m_materialManager.ResovleMaterialSettings(node_renderer.gameObject.name, index);
 
-			materials[i] = CreateFromTemplate(materials[i], template, settings);
+			/* And set the material */
+			materials[i] = m_materialManager.ResolveMaterial(materials[i], template, settings);
 		}
 
 		node_renderer.sharedMaterials = materials;
-	}
-
-	protected Material CreateFromTemplate(Material existing, MaterialTemplate template, MaterialInformation settings)
-	{
-		if(template == null){
-			return existing;
-		}
-		if(settings == null){
-			return existing;
-		}
-		Material m = template.CreateNewInstance(settings);
-		if(existing != null){
-			m.name = existing.name;
-		}
-		return m;
 	}
 
 }

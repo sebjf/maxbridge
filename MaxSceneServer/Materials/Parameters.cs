@@ -430,6 +430,7 @@ namespace MaxSceneServer
                             map.m_mapType = "TexMap"; 
                         }
 
+                        map.m_nativeHandle = t.Handle.ToInt64();
                         map.m_mapName = t.Name;
                         break;
 
@@ -442,7 +443,9 @@ namespace MaxSceneServer
                             return null;
                         }
                         map.m_mapType = "Bitmap";
+                        map.m_nativeHandle = b.Handle.ToInt64();
                         map.m_mapName = b.Bi.Filename;
+
                         break;
 
                     case ParamType2.Filename:
@@ -455,6 +458,7 @@ namespace MaxSceneServer
                         }
 
                         map.m_mapType = "Filename";
+                        map.m_nativeHandle = fn.GetHashCode();
                         map.m_mapName = fn;
                         break;
 

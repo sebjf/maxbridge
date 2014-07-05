@@ -49,6 +49,7 @@ namespace MaxSceneServer
             }
 
             MaterialInformation m = new MaterialInformation();
+            
             m.m_className = material.ClassName;
             m.m_materialName = material.Name;
             m.m_handle = _gi.Animatable.GetHandleByAnim(material).ToUInt64();
@@ -141,6 +142,8 @@ namespace MaxSceneServer
             IBitmap bmp = _gi.CreateBitmapFromBitmapInfo(bmpInfo);
 
             texmap.RenderBitmap(0, bmp, 1.0f, request.m_filter);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(request.m_filename));
 
             //The bmpInfo contains the filename - note it doesnt have to be the same bmpInfo as created above thats just the easiest way to do it here
             bmpInfo.SetName(request.m_filename);
