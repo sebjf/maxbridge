@@ -50,6 +50,7 @@
     <Compile Include="Client\Operations.cs" />
     <Compile Include="Modules\Geometry\GeometryBinding.cs" />
     <Compile Include="Modules\Geometry\GeometryBindingMeshConverter.cs" />
+    <Compile Include="Modules\Geometry\MaterialIDsMapComponent.cs" />
     <Compile Include="Modules\Materials\IMaterialsBinding.cs" />
     <Compile Include="Modules\Materials\MaterialsBinding.cs" />
     <Compile Include="Modules\Materials\MaterialsCore.cs" />

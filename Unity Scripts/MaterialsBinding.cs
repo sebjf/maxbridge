@@ -81,14 +81,14 @@ public class MaterialsBinding {
 		/* Decide what template to use */
 		IMaterialTemplate template = m_templateManager.ResolveTemplate(node_renderer.gameObject);
 
+		/* Get the material ids map component. If there isn't one, use the default which just gets the first material */
+		MaterialIDsMap map = node_renderer.gameObject.GetComponent<MaterialIDsMap>();
+
 		for(int i = 0; i < materials.Length; i++)
 		{
 			int index = -1;
-
-			Match index_match = Regex.Match(materials[i].name, @":[\d]+$");
-			if(index_match.Success)
-			{
-				index = int.Parse(index_match.Value.Substring(1));
+			if(map != null){
+				index = map.GetIdForMaterialSlot(i);
 			}
 
 			/* Get the actual settings from Max */

@@ -86,19 +86,16 @@ namespace MaxUnityBridge
 
         protected void SetMaterials(MeshRenderer renderer, UnityStyleMesh meshsrc, GeometryNode update)
         {
-            string material_name = update.MaterialName;
-
-            if (material_name == null)
-            {
-                material_name = "no name";
-            }
+            MaterialIDsMap map = renderer.gameObject.AddComponent<MaterialIDsMap>();
 
             Material[] materials = new Material[meshsrc.face_groups.Count];
 
             for (int i = 0; i < meshsrc.face_groups.Count; i++)
             {
+                map.m_materialIds.Add(meshsrc.face_groups[i].MaterialId);
+
                 Material m = new Material(Shader.Find("Diffuse"));
-                m.name = material_name + ":" + meshsrc.face_groups[i].MaterialId;
+                m.name = update.MaterialName;
                 materials[i] = m;
             }
 
