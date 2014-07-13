@@ -30,5 +30,11 @@ namespace MaxUnityBridge
         {
             ExchangeIsochronous(new MessageMapRequest(map_reference, destination, width, height));
         }
+
+        public byte[] GetMap(MapReference map_reference, int width, int height)
+        {
+            var m = ExchangeIsochronous(new MessageMapRequest(map_reference, width, height)) as MessageMapData;
+            return m.m_data;
+        }
     }
 }

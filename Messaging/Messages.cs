@@ -109,10 +109,24 @@ namespace Messaging
             m_height = (ushort)height;
         }
 
+        public MessageMapRequest(MapReference map)
+        {
+            m_map = map;
+            m_writeToFile = false;
+        }
+
+        public MessageMapRequest(MapReference map, int width, int height)
+        {
+            m_map = map;
+            m_writeToFile = false;
+            m_width = (ushort)width;
+            m_height = (ushort)height;
+        }
+
         public readonly MapReference m_map;
 
         public readonly bool m_writeToFile = true;
-        public readonly string m_filename;
+        public string m_filename;
         public readonly ushort m_width = 1024;
         public readonly ushort m_height = 1024;
         public readonly bool m_filter = false;
@@ -133,6 +147,17 @@ namespace Messaging
         }
 
         public string m_filename;
+    }
+
+    [Serializable]
+    public class MessageMapData : MessageMapContent
+    {
+        public MessageMapData(byte[] data)
+        {
+            m_data = data;
+        }
+
+        public byte[] m_data;
     }
 
 

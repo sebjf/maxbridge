@@ -8,9 +8,8 @@ using Messaging;
  * the material templates in the most efficient way possible */
 public class TextureManager {
 
-	protected UnityImporter m_impoter;
-
-	public string m_textureDirectory = "imported_textures";
+	protected UnityImporter m_importer;
+	
 	public int width = 1024;
 	public int height = 1024;
 
@@ -24,7 +23,7 @@ public class TextureManager {
 
 	public TextureManager (UnityImporter importer)
 	{
-		m_impoter = importer;
+		m_importer = importer;
 		m_instance = this;
 	}
 
@@ -33,20 +32,19 @@ public class TextureManager {
 		//for now we just get the map
 
 		//create new map filename
-		string directory = Application.dataPath;
-		string subdirectory = m_textureDirectory;
-		string map_extension = ".png";
-
-		string filepath = directory + "\\" + subdirectory + "\\";
-		string filename = map_name + map_extension;
-
 		if(!(map_reference_value is MapReference)){
 			throw new UnityException("Property is not a map!");
 		}
 
-		m_impoter.GetMap(map_reference_value as MapReference, width, height, filepath + filename);
+		long handle = (map_reference_value as MapReference).m_nativeHandle;
 
-		byte[] data = File.ReadAllBytes(filepath + filename);
+		byte[] data = MaterialsBinding.m_cache.GetTexture(handle);
+
+		if(data == null)
+		{
+			data = m_importer.GetMap(map_reference_value as MapReference, width, height);
+			MaterialsBinding.m_cache.SetTexture(handle, data);
+		}
 
 		Texture2D texture = new Texture2D(width,height);
 		texture.LoadImage(data);

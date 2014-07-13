@@ -21,23 +21,8 @@ public class MaterialsBinding {
 		m_textureManager = new TextureManager(importer);
 	}
 
-	public void DoMapTest(IEnumerable<GameObject> scene_nodes)
-	{
-		foreach(var n in scene_nodes)
-		{
-			var m = m_importer.GetMaterials(n.name).GetEnumerator();
-			if(m.MoveNext())
-			{
-				if(m.Current != null) //this means the object was found, but no material is applied in Max
-				{
-					var obj = m.Current.MaterialProperties.GetProperty("diffuseMap");
-					MapReference map = obj as MapReference;
-					m_importer.GetMap(map, 512, 512, @"D:\map_test.bmp");
-				}
-			}
-		}
-	}
-
+	public static Caching m_cache;
+	
 	public void ShowMaterialProperties(IEnumerable<GameObject> scene_nodes)
 	{
 		foreach(var n in scene_nodes)
@@ -57,6 +42,8 @@ public class MaterialsBinding {
 
 	public void UpdateNodeMaterials(IEnumerable<GameObject> scene_nodes)
 	{
+		m_cache = new Caching();
+
 		foreach(var n in scene_nodes)
 		{
 			UpdateNodeMaterials(n);
@@ -78,9 +65,6 @@ public class MaterialsBinding {
 		 * to their name, breaking sub material indexing for those that want to use 3rd party importers for geometry */
 		Material[] materials = node_renderer.sharedMaterials; 
 
-		/* Decide what template to use */
-		IMaterialTemplate template = m_templateManager.ResolveTemplate(node_renderer.gameObject);
-
 		/* Get the material ids map component. If there isn't one, use the default which just gets the first material */
 		MaterialIDsMap map = node_renderer.gameObject.GetComponent<MaterialIDsMap>();
 
@@ -91,11 +75,14 @@ public class MaterialsBinding {
 				index = map.GetIdForMaterialSlot(i);
 			}
 
-			/* Get the actual settings from Max */
-			MaterialInformation settings = m_materialManager.ResovleMaterialSettings(node_renderer.gameObject.name, index);
+			/* Get the material properties */
+			MaterialInformation settings = m_materialManager.ResolveMaterialSettings(node_renderer.gameObject.name, index);
 
+			/* Decide what template to use */
+			IMaterialTemplate template = m_templateManager.ResolveTemplate(node_renderer.gameObject, settings);
+			
 			/* And set the material */
-			materials[i] = m_materialManager.ResolveMaterial(materials[i], template, settings);
+			materials[i] = m_cache.ResolveCachedMaterial(template, settings);
 		}
 
 		node_renderer.sharedMaterials = materials;

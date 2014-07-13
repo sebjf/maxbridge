@@ -52,6 +52,7 @@
     <Compile Include="Modules\Geometry\GeometryBindingMeshConverter.cs" />
     <Compile Include="Modules\Geometry\MaterialIDsMapComponent.cs" />
     <Compile Include="Modules\Materials\IMaterialsBinding.cs" />
+    <Compile Include="Modules\Materials\IMaterialTemplate.cs" />
     <Compile Include="Modules\Materials\MaterialsBinding.cs" />
     <Compile Include="Modules\Materials\MaterialsCore.cs" />
     <Compile Include="Modules\Materials\MaterialTemplate.cs" />

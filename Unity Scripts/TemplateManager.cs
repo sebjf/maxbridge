@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using MaxUnityBridge;
+using Messaging;
 
 /* The template manager is responsible for selecting the best template to use to create a new material, based on what is, or
- what is not present, on each gameobject */
+ what is not present, on each gameobject. Modify this class to control material selection. */
 public class TemplateManager  {
 
 	UnityImporter m_importer;
@@ -13,7 +14,7 @@ public class TemplateManager  {
 		m_importer = importer;
 	}
 
-	public IMaterialTemplate ResolveTemplate(GameObject node)
+	public IMaterialTemplate ResolveTemplate(GameObject node, MaterialInformation settings)
 	{
 		MaterialTemplate t = node.GetComponent<MaterialTemplate>();
 		if(t == null)

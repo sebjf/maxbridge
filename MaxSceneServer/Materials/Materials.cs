@@ -74,7 +74,7 @@ namespace MaxSceneServer
             //}
             if (mapParam.IsTexmapType)
             {
-                return GetTexamp(mapParam, request);
+                return GetTexmap(mapParam, request);
             }
 
             return new MessageMapContent();
@@ -122,8 +122,11 @@ namespace MaxSceneServer
 
         protected const int MAP_HAS_ALPHA = (1 << 1);//!< The bitmap has an alpha channel.
 
-        MessageMapContent GetTexamp(Parameter mapParam, MessageMapRequest request)
+
+        MessageMapContent GetTexmap(Parameter mapParam, MessageMapRequest request)
         {
+            /* Get the map and render it into a new bitmap */
+
             var texmap = mapParam.GetTexmap();
 
             //http://docs.autodesk.com/3DSMAX/16/ENU/3ds-Max-SDK-Programmer-Guide/index.html?url=files/GUID-FD9764C9-EE84-4A1A-BC62-87AE6AF86CC1.htm,topicNumber=d30e31073
@@ -143,6 +146,15 @@ namespace MaxSceneServer
 
             texmap.RenderBitmap(0, bmp, 1.0f, request.m_filter);
 
+            /* If the user is not requesting a filename, create a temp one to write to */
+
+            if (!request.m_writeToFile)
+            {
+                request.m_filename = Path.Combine(Directory.GetCurrentDirectory(), Path.GetRandomFileName() + ".png");
+            }
+
+            /* Write the bitmap to file */
+
             Directory.CreateDirectory(Path.GetDirectoryName(request.m_filename));
 
             //The bmpInfo contains the filename - note it doesnt have to be the same bmpInfo as created above thats just the easiest way to do it here
@@ -155,14 +167,24 @@ namespace MaxSceneServer
             string extension = System.IO.Path.GetExtension(request.m_filename);
             string maxfilename = request.m_filename.Substring(0, request.m_filename.Length - extension.Length) + "0000" + extension;
 
-            if (File.Exists(request.m_filename))
+            /* If the user has requested a file, then rename and return this, otherwise get the data from it and delete it */
+
+            if (request.m_writeToFile)
             {
-                File.Delete(request.m_filename);
+                if (File.Exists(request.m_filename))
+                {
+                    File.Delete(request.m_filename);
+                }
+                System.IO.File.Move(maxfilename, request.m_filename);
+                
+                return new MessageMapFilename(request.m_filename);
             }
-            System.IO.File.Move(maxfilename, request.m_filename);
-
-
-            return new MessageMapFilename(request.m_filename);
+            else
+            {
+                MessageMapContent response = new MessageMapData(File.ReadAllBytes(maxfilename));
+                File.Delete(maxfilename);
+                return response;
+            }
         }
     }
 }

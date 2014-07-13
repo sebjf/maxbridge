@@ -4,22 +4,20 @@ using System.Collections.Generic;
 using MaxUnityBridge;
 using Messaging;
 
-/* The MaterialManager is responsible for finding the correct material settings for the template to use, from max.
- Materials may be composites, or containers (e.g. multimaterial or shell material). This class shall use knowledge
- of these, and what is known about the material in unity, to find the correct material to return. */
+/* The MaterialManager is responsible for retrieving material settings from Max and invoking the template
+ to construct the material. It is also responsible for caching where possible. Special cases such as 
+ the shell material or the multi-material classes are handled here. */
 public class MaterialManager {
 
 	protected UnityImporter m_importer;
-
-	protected Dictionary<ulong, Material> m_materialsCache = new Dictionary<ulong, Material>();
-
+	
 	public MaterialManager (UnityImporter importer)
 	{
 		m_importer = importer;
 	}
-
+	
 	/* This method navigates the graph of material nodes to find */
-	public MaterialInformation ResovleMaterialSettings(string node_name, int index)
+	public MaterialInformation ResolveMaterialSettings(string node_name, int index)
 	{
 		MaterialInformation root_material = GetMaterial(node_name);
 		
@@ -41,7 +39,7 @@ public class MaterialManager {
 		return root_material;
 	}
 
-	public bool MaterialHasSubmaterials(MaterialInformation settings)
+	protected bool MaterialHasSubmaterials(MaterialInformation settings)
 	{
 		switch(settings.m_className)
 		{
@@ -74,33 +72,5 @@ public class MaterialManager {
 		return null;
 	}
 
-	public Material ResolveMaterial(Material existing, IMaterialTemplate template, MaterialInformation settings)
-	{
-		if(!m_materialsCache.ContainsKey(settings.m_handle))
-		{
-			Material m = CreateFromTemplate(existing, template, settings);
-
-			if(m != null){
-				m_materialsCache.Add(settings.m_handle, m);
-			}
-		}
-
-		return m_materialsCache[settings.m_handle];
-	}
-
-	protected Material CreateFromTemplate(Material existing, IMaterialTemplate template, MaterialInformation settings)
-	{
-		if(template == null){
-			return existing;
-		}
-		if(settings == null){
-			return existing;
-		}
-		Material m = template.CreateNewInstance(settings);
-		if(existing != null){
-			m.name = existing.name;
-		}
-		return m;
-	}
 
 }
